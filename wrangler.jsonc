@@ -1,0 +1,12 @@
+// Cloudflare Workers — static assets only, no Worker script needed.
+// Deploy from this folder:  npx wrangler deploy
+{
+  "name": "rachgo",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./",
+    // "/" serves ./index.html
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

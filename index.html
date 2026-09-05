@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="rachg.com — a personal home on the web: notes, work, and a way to say hello.">
+<title>rachg.com — a personal homepage</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308090c'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23f8fafc' font-family='Georgia,serif'%3ER%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Tokens (rachg obsidian/platinum palette, Apple materials) ---------- */
+  :root {
+    --bg: #08090c;
+    --text: #f8fafc;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --hairline: rgba(255,255,255,.08);
+    --hairline-strong: rgba(255,255,255,.18);
+    --glass-bg: rgba(13,15,20,.55);
+    --glass-strong: rgba(13,15,20,.80);
+    --radius-card: 20px;
+    --nav-h: 52px;
+    --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --font-display: "Sora", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", system-ui, sans-serif;
+    --font-serif: "Cinzel", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-ui); font-weight: 300;
+    letter-spacing: -0.011em; overflow: hidden;
+  }
+  ::selection { background: #f8fafc; color: #08090c; }
+  button { font: inherit; color: inherit; background: none; border: 0; }
+
+  /* ---------- Wallpaper: obsidian fluid, calm ---------- */
+  .wallpaper { position: fixed; inset: -14%; z-index: 0; }
+  .wallpaper .blob { position: absolute; border-radius: 50%; will-change: transform; }
+  .blob-a {
+    width: 78vmax; height: 78vmax; left: -22vmax; top: -26vmax;
+    background: radial-gradient(closest-side, rgba(88,98,122,.20), rgba(88,98,122,0) 72%);
+    animation: drift-a 52s ease-in-out infinite alternate;
+  }
+  .blob-b {
+    width: 66vmax; height: 66vmax; right: -24vmax; bottom: -20vmax;
+    background: radial-gradient(closest-side, rgba(150,160,185,.10), rgba(150,160,185,0) 70%);
+    animation: drift-b 64s ease-in-out infinite alternate;
+  }
+  .blob-c {
+    width: 52vmax; height: 52vmax; left: 28%; top: 34%;
+    background: radial-gradient(closest-side, rgba(52,60,86,.22), rgba(52,60,86,0) 74%);
+    animation: drift-c 70s ease-in-out infinite alternate;
+  }
+  .grain { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+  @keyframes drift-a { from { transform: translate(0,0) scale(1); } to { transform: translate(8vmax,6vmax) scale(1.1); } }
+  @keyframes drift-b { from { transform: translate(0,0) scale(1.08); } to { transform: translate(-7vmax,-5vmax) scale(1); } }
+  @keyframes drift-c { from { transform: translate(0,0); } to { transform: translate(-5vmax,4vmax); } }
+
+  /* ---------- Glass nav bar ---------- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    height: var(--nav-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 max(18px, env(safe-area-inset-left));
+    opacity: 0;
+  }
+  .nav::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
+    border-bottom: 1px solid var(--hairline);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    opacity: var(--mat, 0);
+  }
+  .nav .small-title {
+    font-family: var(--font-ui); font-size: 14px; font-weight: 500;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--text-2);
+    opacity: 0;
+  }
+  .nav .details-btn {
+    font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--text);
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 999px; padding: 8px 18px; cursor: pointer;
+    will-change: transform;
+  }
+
+  /* ---------- Scrolling content ---------- */
+  .scroller {
+    position: fixed; inset: 0; z-index: 10;
+    overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.14) transparent;
+  }
+  .content { max-width: 680px; margin: 0 auto; padding: 0 22px 12px; }
+
+  .hero { padding-top: max(14vh, 104px); text-align: center; }
+  .kicker {
+    font-size: 11px; font-weight: 400; letter-spacing: .26em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 20px;
+  }
+  .kicker .sep { color: var(--text-3); opacity: .5; padding: 0 .6em; }
+  h1.large-title {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(54px, 11.5vw, 100px);
+    line-height: 1.0; letter-spacing: -0.035em;
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline;
+    user-select: all;
+  }
+  h1.large-title .ltr { display: inline-block; will-change: transform, filter; }
+  h1.large-title .tld { color: var(--text-3); font-weight: 300; letter-spacing: -0.02em; }
+  .tagline {
+    margin: 22px auto 0; font-size: clamp(17px, 2.4vw, 20px); line-height: 1.55;
+    color: var(--text-2); max-width: 36ch; font-weight: 300; letter-spacing: -0.006em;
+  }
+  .hero-cta { margin-top: 30px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    font-size: 13px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+    text-decoration: none; display: inline-block;
+    border-radius: 999px; padding: 13px 26px; cursor: pointer; will-change: transform;
+  }
+  .btn-primary { background: var(--text); color: #08090c; font-weight: 600; }
+  .btn-ghost {
+    color: var(--text-2); background: rgba(255,255,255,.05);
+    border: 1px solid var(--hairline);
+  }
+
+  /* ---------- The plate ---------- */
+  .plate {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 64px;
+  }
+  .plate .cell {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-card);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 14px 34px rgba(0,0,0,.32);
+    padding: 18px 16px 16px;
+  }
+  .plate dt {
+    font-size: 10px; font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 10px;
+  }
+  .plate dd { font-family: var(--font-serif); font-size: 24px; color: var(--text); letter-spacing: .02em; }
+  .plate dd .dim { color: var(--text-3); font-size: 16px; }
+  @media (max-width: 560px) { .plate { grid-template-columns: 1fr; } }
+
+  /* ---------- Charter preview rows ---------- */
+  .clauses { margin: 58px 0 0; border-top: 1px solid var(--hairline); }
+  .clause {
+    display: flex; align-items: baseline; gap: 20px; width: 100%;
+    text-align: left; padding: 20px 6px; cursor: pointer;
+    border-bottom: 1px solid var(--hairline); will-change: transform;
+  }
+  .clause .no { font-family: var(--font-serif); font-size: 14px; color: var(--text-3); flex: none; }
+  .clause .txt {
+    flex: 1; font-size: 15px; font-weight: 400; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--text); opacity: .92;
+  }
+  .clause .chev { color: var(--text-3); font-size: 15px; flex: none; transition: transform .2s ease; }
+  .clause:hover .chev { transform: translateX(3px); }
+
+  .footnote {
+    margin-top: 40px; padding-bottom: 4px; text-align: center;
+    font-size: 12px; color: var(--text-3); line-height: 1.7; letter-spacing: .04em;
+  }
+
+  /* ---------- Dossier sheet ---------- */
+  .sheet {
+    position: fixed; left: 50%; top: 0; z-index: 50;
+    width: min(680px, 100%);
+    height: var(--sheet-h, 92vh);
+    transform: translate3d(-50%, 100vh, 0);
+    will-change: transform;
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    backdrop-filter: blur(30px) saturate(160%);
+    border: 1px solid var(--hairline); border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 -20px 70px rgba(0,0,0,.5);
+    display: flex; flex-direction: column;
+    touch-action: none;
+  }
+  .sheet-head { flex: none; padding: 8px 24px 14px; cursor: grab; user-select: none; touch-action: none; }
+  .sheet-head:active { cursor: grabbing; }
+  .grabber {
+    display: block; width: 42px; height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,.28); margin: 2px auto 14px; cursor: grab;
+    touch-action: none; padding: 0;
+  }
+  .sheet-head .row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .sheet-head h2 {
+    font-family: var(--font-serif); font-size: 20px; font-weight: 500;
+    letter-spacing: .08em; text-transform: uppercase;
+  }
+  .sheet-head .hint { font-size: 12px; color: var(--text-3); letter-spacing: .02em; }
+  .sheet-body {
+    flex: 1; overflow-y: auto; overscroll-behavior: contain;
+    position: relative;                    /* offsetTop anchor for section jumps */
+    padding: 2px 24px max(24px, env(safe-area-inset-bottom)) 24px;
+    border-top: 1px solid var(--hairline);
+    touch-action: pan-y;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.14) transparent;
+  }
+  .section { padding: 20px 0 10px; }
+  .section + .section { border-top: 1px solid var(--hairline); }
+  .section h4 {
+    font-size: 10px; font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 14px;
+  }
+  .section > p { font-size: 14px; line-height: 1.65; color: var(--text-2); }
+
+  .article-list .article {
+    display: flex; align-items: baseline; gap: 16px; width: 100%;
+    text-align: left; padding: 15px 2px; cursor: pointer;
+    border-bottom: 1px solid var(--hairline);
+    will-change: transform;
+  }
+  .article-list .article:last-child { border-bottom: none; }
+  .article-list .a-title {
+    font-family: var(--font-serif); font-size: 17px; letter-spacing: .04em;
+    color: var(--text); flex: 1; min-width: 0;
+  }
+  .article-list .a-date {
+    font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-3); flex: none;
+  }
+  .article-list .a-empty { font-size: 13px; color: var(--text-3); line-height: 1.6; padding: 2px 0 6px; }
+
+  /* ---------- Reader: full-height article view ---------- */
+  .reader {
+    position: fixed; left: 50%; top: 0; z-index: 55;
+    width: min(680px, 100%);
+    height: var(--reader-h, 100vh);
+    transform: translate3d(-50%, 100vh, 0);
+    will-change: transform;
+    background: rgba(10,11,15,.93);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    backdrop-filter: blur(30px) saturate(160%);
+    border: 1px solid var(--hairline); border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 -20px 70px rgba(0,0,0,.55);
+    display: flex; flex-direction: column;
+    touch-action: none;
+  }
+  .reader-head {
+    position: relative; flex: none; padding: 10px 16px 12px;
+    cursor: grab; user-select: none; touch-action: none;
+  }
+  .reader-head:active { cursor: grabbing; }
+  .reader-head .grabber {
+    display: block; width: 42px; height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,.28); margin: 0 auto;
+    cursor: grab; touch-action: none; padding: 0; border: 0;
+  }
+  .reader-close {
+    position: absolute; right: 16px; top: 5px;
+    font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--text-2);
+    background: rgba(255,255,255,.06); border: 1px solid var(--hairline);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; will-change: transform;
+  }
+  .reader-body {
+    flex: 1; overflow-y: auto; overscroll-behavior: contain;
+    padding: 8px 30px 64px;
+    border-top: 1px solid var(--hairline);
+    touch-action: pan-y;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.14) transparent;
+  }
+  .r-date {
+    font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--text-3); margin: 14px 0 10px;
+  }
+  .r-title {
+    font-family: var(--font-display); font-size: clamp(26px, 4.6vw, 34px);
+    font-weight: 600; letter-spacing: -0.028em; line-height: 1.15;
+    color: var(--text); margin-bottom: 20px;
+  }
+  .r-content { font-size: 15.5px; font-weight: 300; line-height: 1.78; color: var(--text-2); letter-spacing: -0.004em; }
+  .r-content h1, .r-content h2, .r-content h3 {
+    font-family: var(--font-display); color: var(--text);
+    letter-spacing: -0.02em; line-height: 1.25; margin: 30px 0 12px;
+  }
+  .r-content h1 { font-size: 24px; } .r-content h2 { font-size: 20px; } .r-content h3 { font-size: 17px; }
+  .r-content p { margin: 0 0 16px; }
+  .r-content a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.35); }
+  .r-content strong { color: var(--text); font-weight: 600; }
+  .r-content code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px;
+    background: rgba(255,255,255,.07); border: 1px solid var(--hairline);
+    border-radius: 6px; padding: 2px 6px;
+  }
+  .r-content pre {
+    background: #0d0f14; border: 1px solid var(--hairline); border-radius: 12px;
+    padding: 14px 16px; overflow-x: auto; margin: 0 0 18px;
+  }
+  .r-content pre code { background: none; border: none; padding: 0; font-size: 12.5px; line-height: 1.6; }
+  .r-content blockquote { margin: 0 0 18px; padding: 2px 0 2px 16px; border-left: 2px solid var(--hairline-strong); color: var(--text-3); }
+  .r-content ul, .r-content ol { margin: 0 0 16px; padding-left: 22px; }
+  .r-content li { margin-bottom: 6px; }
+  .r-content hr { border: 0; border-top: 1px solid var(--hairline); margin: 26px 0; }
+  .r-content img { max-width: 100%; border-radius: 12px; }
+  .r-loading { font-size: 14px; color: var(--text-3); padding: 20px 0; line-height: 1.7; }
+
+  .project-list .project { padding: 13px 2px; border-bottom: 1px solid var(--hairline); }
+  .project-list .project:last-child { border-bottom: none; }
+  .project-list .p-name {
+    font-family: var(--font-serif); font-size: 17px; letter-spacing: .06em;
+    color: var(--text); text-decoration: none;
+  }
+  a.p-name:hover { color: #fff; }
+  .project-list .p-arrow { font-family: var(--font-ui); font-size: 12px; color: var(--text-3); margin-left: 6px; }
+  .project-list .p-desc {
+    margin-top: 5px; font-size: 12.5px; font-weight: 300; line-height: 1.55;
+    color: var(--text-3); letter-spacing: -0.004em;
+  }
+  .project-list .empty { font-size: 13px; color: var(--text-3); padding: 2px 0 6px; }
+
+  .correspond {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--hairline);
+    border-radius: 16px; padding: 8px 8px 8px 16px;
+  }
+  .correspond .addr {
+    flex: 1; min-width: 0; font-size: 14.5px; letter-spacing: .04em;
+    color: var(--text); text-decoration: none; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; will-change: transform; display: block;
+  }
+  .correspond .copy-btn {
+    flex: none; font-size: 10px; font-weight: 500; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--text-2);
+    border: 1px solid var(--hairline); border-radius: 999px;
+    padding: 9px 16px; cursor: pointer; will-change: transform;
+  }
+
+  /* ---------- Toast (same path in & out, top edge) ---------- */
+  .toast {
+    position: fixed; top: max(14px, env(safe-area-inset-top)); left: 50%; z-index: 60;
+    transform: translate3d(-50%, -160%, 0);
+    width: min(430px, calc(100% - 28px));
+    display: flex; align-items: center; gap: 13px;
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--hairline-strong); border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 16px 44px rgba(0,0,0,.5);
+    padding: 13px 17px; cursor: pointer;
+    opacity: 0; will-change: transform;
+  }
+  .toast .check {
+    flex: none; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--text); color: #08090c; font-size: 13px;
+    display: grid; place-items: center;
+  }
+  .toast .txt b { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: .01em; }
+  .toast .txt span { display: block; font-size: 12px; color: var(--text-2); margin-top: 2px; letter-spacing: .03em; }
+
+  :focus-visible { outline: 2px solid rgba(248,250,252,.75); outline-offset: 3px; border-radius: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob-a, .blob-b, .blob-c { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wallpaper" aria-hidden="true">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <span class="small-title" id="smallTitle">rachg.com</span>
+  <button class="details-btn" id="detailsBtn" data-press aria-haspopup="dialog" aria-expanded="false">Dossier</button>
+</header>
+
+<main class="scroller" id="scroller">
+  <div class="content">
+    <section class="hero">
+      <p class="kicker anim" style="--i:0">Personal homepage <span class="sep">·</span> notes, work &amp; hello</p>
+      <h1 class="large-title" id="wordmark" aria-label="rachg.com"></h1>
+      <p class="tagline anim" style="--i:6">A personal home on the web — what I'm building, what I'm thinking, and a way to say hello.</p>
+      <div class="hero-cta anim" style="--i:7">
+        <button class="btn btn-primary" id="openDossier" data-press data-open-sheet>View the dossier</button>
+        <a class="btn btn-ghost" id="enquireBtn" href="mailto:hello@rachg.com" data-press>Say hello</a>
+      </div>
+    </section>
+
+    <dl class="plate anim" style="--i:8">
+      <div class="cell"><dt>Site</dt><dd>rachg<span class="dim">.com</span></dd></div>
+      <div class="cell"><dt>Now</dt><dd>Freelancing</dd></div>
+      <div class="cell"><dt>Say hi</dt><dd>Always <span class="dim">open</span></dd></div>
+    </dl>
+
+    <div class="clauses anim" style="--i:9" aria-label="Sections">
+      <button class="clause" data-press data-goto="sec-articles">
+        <span class="no">i.</span><span class="txt">Articles</span><span class="chev" aria-hidden="true">›</span>
+      </button>
+      <button class="clause" data-press data-goto="sec-projects">
+        <span class="no">ii.</span><span class="txt">Projects</span><span class="chev" aria-hidden="true">›</span>
+      </button>
+      <button class="clause" data-press data-goto="sec-about">
+        <span class="no">iii.</span><span class="txt">About</span><span class="chev" aria-hidden="true">›</span>
+      </button>
+    </div>
+
+    <p class="footnote anim" style="--i:10">
+      rachg.com · © MMXXVI · a personal homepage<br>
+      Built with the apple-design skill.
+    </p>
+  </div>
+</main>
+
+<section class="sheet" id="sheet" role="dialog" aria-label="Dossier — notices, projects and contact" aria-modal="false">
+  <div class="sheet-head" id="sheetHead">
+    <button class="grabber" id="grabber" data-press aria-label="Toggle dossier sheet" aria-expanded="false"></button>
+    <div class="row">
+      <h2>Dossier</h2>
+      <span class="hint" id="sheetHint">drag up for more</span>
+    </div>
+  </div>
+  <div class="sheet-body" id="sheetBody">
+    <div class="section" id="sec-articles">
+      <h4>Articles</h4>
+      <div class="article-list" id="articleList"><!-- rendered from the articles/ folder --></div>
+    </div>
+    <div class="section" id="sec-projects">
+      <h4>Projects</h4>
+      <div class="project-list" id="projectList"><!-- rendered from the PROJECTS array in the script --></div>
+    </div>
+    <div class="section" id="sec-about">
+      <h4>About</h4>
+      <p>rachg.com is my home base. I'm a freelance developer — I design and build
+         things for the web, for clients and for myself. No feed, no algorithm here:
+         just a page, a few notes, and a mailbox. Fresh writing lands in the articles first.</p>
+    </div>
+    <div class="section" id="sec-correspondence">
+      <h4>Correspondence</h4>
+      <p>The inbox is the standing invitation. Write, or simply hold the address.</p>
+      <div class="correspond" style="margin-top:14px">
+        <a class="addr" id="emailAddr" href="mailto:hello@rachg.com" data-press>hello@rachg.com</a>
+        <button class="copy-btn" id="copyBtn" data-press aria-label="Copy email address">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-label="Article reader" aria-hidden="true">
+  <div class="reader-head" id="readerHead">
+    <button class="grabber" id="readerGrabber" aria-label="Close article"></button>
+    <button class="reader-close" id="readerClose" data-press>Close</button>
+  </div>
+  <div class="reader-body" id="readerBody">
+    <p class="r-date" id="rDate"></p>
+    <h1 class="r-title" id="rTitle"></h1>
+    <div class="r-content" id="rContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span class="check" aria-hidden="true">✓</span>
+  <span class="txt"><b id="toastTitle">Copied</b><span id="toastSub">hello@rachg.com is on your clipboard.</span></span>
+</div>
+
+<script>
+'use strict';
+/* ============================================================
+   apple-design: fluid interfaces, translated for the web.
+   Implemented here:
+   1. Respond on pointerdown, not click.
+   2. Springs only — always starting from the displayed value,
+      so any motion can be interrupted and reversed.
+   3. Speed hand-off: a released gesture feeds its velocity into
+      the spring as initial velocity.
+   4. Momentum projection: snap where the gesture is headed,
+      not merely where it stopped.
+   5. Rubber-banding beyond the edges.
+   6. Enter and exit share the same path.
+   7. prefers-reduced-motion → settle instantly, no movement.
+   Velocities are px/ms (pointer units).
+   ============================================================ */
+
+const $ = (s) => document.querySelector(s);
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+/* ---------- Spring: closed-form damped harmonic oscillator ---------- */
+class Spring {
+  constructor({ value = 0, response = 0.3, damping = 0.8, onUpdate = null } = {}) {
+    this.value = value; this.velocity = 0;          // px, px/ms
+    this.target = value;
+    this.response = response; this.damping = damping;
+    this.onUpdate = onUpdate;
+    this._from = value; this._v0 = 0; this._t0 = 0; // _v0 in px/s
+    this._raf = null;
+  }
+  _pos(dtSec) {
+    const w0 = 2 * Math.PI / this.response, z = this.damping;
+    const x0 = this._from - this.target, v0 = this._v0;
+    if (z < 1) {
+      const wd = w0 * Math.sqrt(1 - z * z);
+      const B = (v0 + z * w0 * x0) / wd;
+      return this.target + Math.exp(-z * w0 * dtSec) * (x0 * Math.cos(wd * dtSec) + B * Math.sin(wd * dtSec));
+    }
+    if (z === 1) {
+      return this.target + Math.exp(-w0 * dtSec) * (x0 + (v0 + w0 * x0) * dtSec);
+    }
+    const r1 = -w0 * (z - Math.sqrt(z * z - 1)), r2 = -w0 * (z + Math.sqrt(z * z - 1));
+    const A = (v0 - r2 * x0) / (r1 - r2), B = x0 - A;
+    return this.target + A * Math.exp(r1 * dtSec) + B * Math.exp(r2 * dtSec);
+  }
+  _tick = (now) => {
+    const dt = (now - this._t0) / 1000;
+    this.value = this._pos(dt);
+    const eps = 0.001;
+    this.velocity = (this._pos(dt) - this._pos(Math.max(0, dt - eps))) / (eps * 1000); // px/ms
+    if (Math.abs(this.value - this.target) < 0.1 && Math.abs(this.velocity) < 0.004) {
+      this.value = this.target; this.velocity = 0;
+      cancelAnimationFrame(this._raf); this._raf = null;
+      this.onUpdate && this.onUpdate(this.value);
+      return;
+    }
+    this.onUpdate && this.onUpdate(this.value);
+    this._raf = requestAnimationFrame(this._tick);
+  };
+  to(target, velocity = this.velocity) {
+    if (REDUCED.matches) {
+      if (this._raf) cancelAnimationFrame(this._raf);
+      this._raf = null;
+      this.value = target; this.velocity = 0; this.target = target;
+      this.onUpdate && this.onUpdate(this.value);
+      return;
+    }
+    this._from = this.value;               // interruption-safe: from the displayed value
+    this._v0 = velocity * 1000;            // px/ms → px/s
+    this._t0 = performance.now();
+    this.target = target;
+    if (this._raf) cancelAnimationFrame(this._raf);
+    this._raf = requestAnimationFrame(this._tick);
+  }
+  stop() { if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; } }
+  jump(v) {
+    this.stop(); this.value = v; this.velocity = 0; this.target = v;
+    this.onUpdate && this.onUpdate(v);
+  }
+}
+
+/* ---------- Momentum projection (UIKit decelerationRate .normal) ---------- */
+const DECEL = 0.998;
+const projectMomentum = (from, vPxMs) => from + (vPxMs / 1000) * DECEL / (1 - DECEL); // ≈ +499·v
+
+/* ---------- Rubber band ---------- */
+const rubber = (x, lo, hi, span) => {
+  const f = (d) => (1 - 1 / ((d * 0.55) / span + 1)) * span;
+  if (x < lo) return lo - f(lo - x);
+  if (x > hi) return hi + f(x - hi);
+  return x;
+};
+
+/* ---------- Pointer velocity tracker (px/ms, ~100ms window) ---------- */
+function makeTracker() {
+  let pts = [];
+  return {
+    reset(x, y, t) { pts = [{ x, y, t }]; },
+    add(x, y, t) { pts.push({ x, y, t }); while (pts.length > 2 && t - pts[0].t > 100) pts.shift(); },
+    velocity() {
+      if (pts.length < 2) return { x: 0, y: 0 };
+      const a = pts[0], b = pts[pts.length - 1];
+      const dt = Math.max(1, b.t - a.t);
+      return { x: (b.x - a.x) / dt, y: (b.y - a.y) / dt };
+    }
+  };
+}
+
+/* ============================================================
+   Articles — a plain folder of markdown files.
+   1. Drop `my-post.md` into the articles/ folder next to this page.
+   2. List the filename in articles/index.json (newest first).
+   Name a file `2026-09-05-my-post.md` and its date shows too.
+   ============================================================ */
+const ARTICLES_DIR = 'articles';
+let articleFiles = [];
+
+function articleMeta(file) {
+  let rest = file.replace(/\.md$/i, ''), date = '';
+  const m = rest.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
+  if (m) {
+    const d = new Date(m[1] + 'T00:00:00');
+    if (!isNaN(d)) date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    rest = m[2];
+  }
+  const SMALL = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'to', 'of', 'in', 'on', 'for', 'with', 'at', 'by']);
+  const title = rest.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ')
+    .map((w, i) => (i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ');
+  return { date, title };
+}
+
+function renderArticleList() {
+  const list = $('#articleList');
+  list.textContent = '';
+  if (!articleFiles.length) {
+    const p = document.createElement('p');
+    p.className = 'a-empty';
+    p.textContent = 'No articles yet — drop .md files into the articles folder and list them in index.json.';
+    list.appendChild(p);
+    return;
+  }
+  for (const file of articleFiles) {
+    const meta = articleMeta(file);
+    const row = document.createElement('button');
+    row.className = 'article';
+    row.setAttribute('data-press', '');
+    const title = document.createElement('span');
+    title.className = 'a-title'; title.textContent = meta.title;
+    const date = document.createElement('span');
+    date.className = 'a-date'; date.textContent = meta.date;
+    row.append(title, date);
+    row.addEventListener('click', () => openArticle(file));
+    list.appendChild(row);
+    pressable(row);
+  }
+}
+
+async function loadArticles() {
+  const list = $('#articleList');
+  if (location.protocol === 'file:') {
+    list.textContent = '';
+    const p = document.createElement('p');
+    p.className = 'a-empty';
+    p.textContent = 'Articles load over HTTP — open this page from a local server or the live site (browsers block file reads on file:// pages).';
+    list.appendChild(p);
+    return;
+  }
+  try {
+    const res = await fetch(`${ARTICLES_DIR}/index.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = await res.json();
+    articleFiles = files.filter((f) => /\.md$/i.test(f));
+  } catch (err) {
+    articleFiles = [];
+    list.textContent = '';
+    const p = document.createElement('p');
+    p.className = 'a-empty';
+    p.textContent = 'Couldn’t read articles/index.json — create an articles folder next to this page and list your .md files in it.';
+    list.appendChild(p);
+    return;
+  }
+  renderArticleList();
+}
+loadArticles();
+
+/* ---------- Tiny markdown renderer (escaped first — safe) ---------- */
+function mdToHtml(src) {
+  // the reader already shows the title, so a leading H1 would duplicate it
+  src = src.replace(/\r\n?/g, '\n').replace(/^\s*#\s+[^\n]*\n/, '');
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const inline = (s) => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const out = [];
+  let para = [], list = null, quote = [], code = null;
+  const flushPara = () => { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } };
+  const flushList = () => { if (list) { out.push('<' + list.tag + '>' + list.items.map((i) => '<li>' + inline(i) + '</li>').join('') + '</' + list.tag + '>'); list = null; } };
+  const flushQuote = () => { if (quote.length) { out.push('<blockquote>' + inline(quote.join(' ')) + '</blockquote>'); quote = []; } };
+  const flushAll = () => { flushPara(); flushList(); flushQuote(); };
+  for (const raw of src.replace(/\r\n?/g, '\n').split('\n')) {
+    if (code !== null) {
+      if (/^```/.test(raw.trim())) { out.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>'); code = null; }
+      else code.push(raw);
+      continue;
+    }
+    const t = raw.trim();
+    if (/^```/.test(t)) { flushAll(); code = []; continue; }
+    if (!t) { flushAll(); continue; }
+    const h = t.match(/^(#{1,3})\s+(.*)/);
+    if (h) { flushAll(); const n = h[1].length; out.push('<h' + n + '>' + inline(h[2]) + '</h' + n + '>'); continue; }
+    if (/^(-{3,}|\*{3,})$/.test(t)) { flushAll(); out.push('<hr>'); continue; }
+    if (/^>\s?/.test(t)) { flushPara(); flushList(); quote.push(t.replace(/^>\s?/, '')); continue; }
+    const ul = t.match(/^[-*]\s+(.*)/);
+    if (ul) { flushPara(); flushQuote(); if (!list || list.tag !== 'ul') { flushList(); list = { tag: 'ul', items: [] }; } list.items.push(ul[1]); continue; }
+    const ol = t.match(/^\d+[.)]\s+(.*)/);
+    if (ol) { flushPara(); flushQuote(); if (!list || list.tag !== 'ol') { flushList(); list = { tag: 'ol', items: [] }; } list.items.push(ol[1]); continue; }
+    flushList(); flushQuote(); para.push(t);
+  }
+  if (code !== null) out.push('<pre><code>' + esc(code.join('\n')) + '</code></pre>');
+  flushAll();
+  return out.join('');
+}
+
+/* ---------- Reader: springs up over everything, drag down to dismiss ---------- */
+const reader = $('#reader'), readerHead = $('#readerHead'), readerBody = $('#readerBody');
+const readerClose = $('#readerClose');
+const readerGeo = { ih: 0 };
+function measureReader() {
+  readerGeo.ih = window.innerHeight;
+  reader.style.height = readerGeo.ih + 'px';
+}
+measureReader();
+const readerSpring = new Spring({
+  value: readerGeo.ih,                          // starts fully below the screen
+  response: 0.42, damping: 0.85,
+  onUpdate: (y) => { reader.style.transform = `translate3d(-50%, ${y}px, 0)`; },
+});
+readerSpring.jump(readerGeo.ih);
+
+let readerOpen = false, readerFile = null;
+const mdCache = new Map();
+
+function openArticle(file) {
+  readerFile = file;
+  const meta = articleMeta(file);
+  $('#rDate').textContent = meta.date;
+  $('#rTitle').textContent = meta.title;
+  const content = $('#rContent');
+  content.innerHTML = '<p class="r-loading">Loading…</p>';
+  readerBody.scrollTop = 0;
+  reader.setAttribute('aria-hidden', 'false');
+  readerOpen = true;
+  readerSpring.to(0, 0);
+  if (mdCache.has(file)) { content.innerHTML = mdToHtml(mdCache.get(file)); return; }
+  fetch(`${ARTICLES_DIR}/${encodeURIComponent(file)}`, { cache: 'no-store' })
+    .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
+    .then((md) => { if (readerFile === file) { mdCache.set(file, md); content.innerHTML = mdToHtml(md); } })
+    .catch(() => {
+      if (readerFile !== file) return;
+      content.innerHTML = '<p class="r-loading">Couldn’t load this article' +
+        (location.protocol === 'file:'
+          ? ' — pages opened from file:// can’t fetch files. Serve the folder over HTTP (or visit the live site).'
+          : '. Check that the file exists in the articles folder and is listed in index.json.') + '</p>';
+    });
+}
+function closeReader(velocity = 0) {
+  readerOpen = false;
+  reader.setAttribute('aria-hidden', 'true');
+  readerSpring.to(readerGeo.ih, velocity);      // exits along the same path it entered
+}
+readerClose.addEventListener('click', () => closeReader(0));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && readerOpen) closeReader(0);
+});
+
+const readerTracker = makeTracker();
+let readerDrag = null;
+readerHead.addEventListener('pointerdown', (e) => {
+  if (e.button && e.button !== 0) return;
+  if (e.target.closest('#readerClose')) return;   // the Close button is not a handle
+  e.preventDefault();
+  readerHead.setPointerCapture(e.pointerId);
+  readerTracker.reset(e.clientX, e.clientY, e.timeStamp);
+  readerDrag = { startY: e.clientY, moved: false, t0: e.timeStamp };
+  readerSpring.stop();
+});
+readerHead.addEventListener('pointermove', (e) => {
+  if (!readerDrag) return;
+  readerTracker.add(e.clientX, e.clientY, e.timeStamp);
+  const dy = e.clientY - readerDrag.startY;
+  if (Math.abs(dy) > 4) readerDrag.moved = true;
+  // top edge is hard; pulling down rubber-bands
+  readerSpring.value = Math.max(0, rubber(dy, 0, readerGeo.ih, readerGeo.ih));
+  reader.style.transform = `translate3d(-50%, ${readerSpring.value}px, 0)`;
+});
+function readerEndDrag(e) {
+  if (!readerDrag) return;
+  const v = readerTracker.velocity();
+  const moved = readerDrag.moved, dt = e.timeStamp - readerDrag.t0;
+  readerDrag = null;
+  if (!moved && dt < 600) { closeReader(0); return; }   // a tap on the head closes
+  const projected = projectMomentum(readerSpring.value, v.y);
+  if (projected > readerGeo.ih * 0.3 || v.y > 0.45) closeReader(v.y);   // hand the speed over
+  else readerSpring.to(0, v.y);
+}
+readerHead.addEventListener('pointerup', readerEndDrag);
+readerHead.addEventListener('pointercancel', readerEndDrag);
+
+window.addEventListener('resize', () => {
+  measureReader();
+  readerSpring.jump(readerOpen ? 0 : readerGeo.ih);
+});
+
+const PROJECTS = [
+  { name: 'rachg.com', desc: 'This homepage — a single-file study in fluid interface design.', url: '' },
+  { name: 'Project Two', desc: 'Replace these entries with your own work in the PROJECTS array.', url: '' },
+];
+function renderProjects() {
+  const list = $('#projectList');
+  list.textContent = '';
+  if (!PROJECTS.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'Nothing here yet.';
+    list.appendChild(p);
+    return;
+  }
+  for (const pr of PROJECTS) {
+    const item = document.createElement('div');
+    item.className = 'project';
+    let nameEl;
+    if (pr.url) {
+      nameEl = document.createElement('a');
+      nameEl.href = pr.url;
+      nameEl.target = '_blank';
+      nameEl.rel = 'noopener';
+      const arrow = document.createElement('span');
+      arrow.className = 'p-arrow'; arrow.textContent = '↗';
+      nameEl.append(pr.name, arrow);
+    } else {
+      nameEl = document.createElement('span');
+      nameEl.className = 'p-name';
+      nameEl.textContent = pr.name;
+    }
+    nameEl.classList.add('p-name');
+    const desc = document.createElement('p');
+    desc.className = 'p-desc'; desc.textContent = pr.desc;
+    item.append(nameEl, desc);
+    list.appendChild(item);
+  }
+}
+renderProjects();
+
+/* ============================================================
+   Press feedback: respond on pointerdown; critical damping
+   (no bounce) on release — Apple's button behavior.
+   ============================================================ */
+function pressable(el, scale = 0.96) {
+  if (!el || el._press) return;
+  const sp = new Spring({ value: 1, response: 0.25, damping: 1, onUpdate: (v) => {
+    el.style.transform = `scale(${v})`;
+  }});
+  const down = (e) => { if (e.button && e.button !== 0) return; sp.to(scale, 0); };
+  const up = () => sp.to(1, 0);
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', up);
+  el._press = sp;
+}
+document.querySelectorAll('[data-press]').forEach((el) => pressable(el));
+
+/* ============================================================
+   Load-in: the wordmark and blocks arrive on springs.
+   ============================================================ */
+const wordmark = $('#wordmark');
+'rachg'.split('').forEach((ch) => {
+  const s = document.createElement('span');
+  s.className = 'ltr'; s.textContent = ch; wordmark.appendChild(s);
+});
+const tld = document.createElement('span');
+tld.className = 'ltr tld'; tld.textContent = '.com'; wordmark.appendChild(tld);
+
+function intro(el, { dy = 30, blur = 8, scale = 0.94, delay = 0, response = 0.55 } = {}) {
+  const sp = new Spring({ value: 0, response, damping: 0.85, onUpdate: (p) => {
+    el.style.opacity = String(p);
+    el.style.transform = `translateY(${(1 - p) * dy}px) scale(${scale + (1 - scale) * p})`;
+    if (blur) el.style.filter = `blur(${(1 - p) * blur}px)`;
+  }});
+  if (REDUCED.matches) { sp.jump(1); return; }
+  setTimeout(() => sp.to(1, 0), delay);
+}
+document.querySelectorAll('.ltr').forEach((el, i) => intro(el, { delay: 100 + i * 50, dy: 46, blur: 12, scale: 0.9 }));
+document.querySelectorAll('.anim').forEach((el) => {
+  const i = parseInt(el.style.getPropertyValue('--i') || '0', 10);
+  intro(el, { delay: 260 + i * 80, dy: 24, blur: 0 });
+});
+
+/* ============================================================
+   Nav bar: fades in on load; the small title fades in as the
+   large title scrolls away; the bar gains its glass material
+   only once content actually passes beneath it.
+   ============================================================ */
+const nav = $('#nav'), smallTitle = $('#smallTitle'), scroller = $('#scroller');
+const navIntro = new Spring({ value: 0, response: 0.5, damping: 1, onUpdate: (p) => {
+  nav.style.opacity = String(p);
+}});
+setTimeout(() => navIntro.to(1, 0), REDUCED.matches ? 0 : 420);
+let navTick = false;
+scroller.addEventListener('scroll', () => {
+  if (navTick) return; navTick = true;
+  requestAnimationFrame(() => {
+    navTick = false;
+    const y = scroller.scrollTop;
+    const fade = clamp(y / 64, 0, 1);
+    smallTitle.style.opacity = String(fade);
+    nav.style.opacity = '1';
+    nav.style.setProperty('--mat', fade > 0.02 ? '1' : '0');
+  });
+}, { passive: true });
+
+/* ============================================================
+   Dossier sheet: peek ⇄ expanded.
+   - Drag: position follows the finger 1:1, rubber-banded.
+   - Release: momentum projection picks the target; the spring
+     starts from the displayed offset with the gesture's velocity.
+   - Grabbing a moving sheet interrupts it cleanly.
+   ============================================================ */
+const sheet = $('#sheet'), sheetHead = $('#sheetHead'), grabber = $('#grabber');
+const detailsBtn = $('#detailsBtn'), sheetHint = $('#sheetHint'), sheetBody = $('#sheetBody');
+
+const geo = { ih: 0, H: 0, yOpen: 0, peekOffset: 0, peekShow: 0 };
+function measure() {
+  geo.ih = window.innerHeight;
+  geo.H = Math.round(geo.ih * 0.92);
+  geo.peekShow = Math.round(geo.ih * 0.26);
+  geo.yOpen = geo.ih - geo.H;
+  geo.peekOffset = geo.H - geo.peekShow;
+  sheet.style.height = geo.H + 'px';
+  document.querySelector('.content').style.paddingBottom = (geo.peekShow + 52) + 'px';
+}
+measure();
+
+const sheetSpring = new Spring({
+  value: geo.H,
+  response: 0.3, damping: 0.8,             // Apple's sheet preset
+  onUpdate: (o) => { sheet.style.transform = `translate3d(-50%, ${o}px, 0)`; },
+});
+sheet.style.top = geo.yOpen + 'px';
+sheetSpring.jump(geo.H);                   // fully off-screen
+setTimeout(() => sheetSpring.to(geo.peekOffset, 0), REDUCED.matches ? 0 : 540);
+
+let sheetState = 'peek';
+function setSheet(state, velocity = 0) {
+  sheetState = state;
+  sheetSpring.to(state === 'open' ? 0 : geo.peekOffset, velocity);
+  sheetHint.textContent = state === 'open' ? 'drag down or tap to close' : 'drag up for more';
+  const open = state === 'open';
+  grabber.setAttribute('aria-expanded', String(open));
+  detailsBtn.setAttribute('aria-expanded', String(open));
+  if (open) detailsBtn.textContent = 'Close';
+  else detailsBtn.textContent = 'Dossier';
+}
+const toggleSheet = () => setSheet(sheetState === 'open' ? 'peek' : 'open');
+
+detailsBtn.addEventListener('click', () => {
+  setSheet(sheetState === 'open' ? 'peek' : 'open');
+});
+document.querySelectorAll('[data-open-sheet]').forEach((el) =>
+  el.addEventListener('click', () => setSheet('open')));
+/* Sections rows (i. ii. iii.) open the dossier at the right place. */
+document.querySelectorAll('[data-goto]').forEach((el) =>
+  el.addEventListener('click', () => {
+    setSheet('open');
+    const target = document.getElementById(el.dataset.goto);
+    if (target) {
+      // smooth scroll needs a visible page; jump instantly when hidden
+      const behavior = (REDUCED.matches || document.hidden) ? 'auto' : 'smooth';
+      sheetBody.scrollTo({ top: Math.max(0, target.offsetTop - 10), behavior });
+    }
+  }));
+
+/* Tap on the grabber toggles (keyboard-friendly); the pointer
+   path is handled by the head's pointerup below. */
+grabber.addEventListener('click', (e) => { if (e.detail === 0) toggleSheet(); });
+
+const tracker = makeTracker();
+let drag = null;
+
+sheetHead.addEventListener('pointerdown', (e) => {
+  if (e.button && e.button !== 0) return;
+  e.preventDefault();
+  sheetHead.setPointerCapture(e.pointerId);
+  tracker.reset(e.clientX, e.clientY, e.timeStamp);
+  drag = { startO: sheetSpring.value, startY: e.clientY, moved: false, t0: e.timeStamp };
+  sheetSpring.stop();                      // interrupt whatever it was doing
+});
+sheetHead.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  tracker.add(e.clientX, e.clientY, e.timeStamp);
+  const dy = e.clientY - drag.startY;
+  if (Math.abs(dy) > 4) drag.moved = true;
+  sheetSpring.value = rubber(drag.startO + dy, 0, geo.peekOffset, geo.peekOffset);
+  sheet.style.transform = `translate3d(-50%, ${sheetSpring.value}px, 0)`;
+});
+function endDrag(e) {
+  if (!drag) return;
+  const v = tracker.velocity();
+  const moved = drag.moved, dt = e.timeStamp - drag.t0;
+  drag = null;
+  if (!moved && dt < 600) { toggleSheet(); return; }   // a tap on the head toggles
+  // Momentum projection: go where the gesture was headed.
+  const projected = projectMomentum(sheetSpring.value, v.y);
+  const target = projected < geo.peekOffset / 2 ? 0 : geo.peekOffset;
+  setSheet(target === 0 ? 'open' : 'peek', v.y);       // speed hand-off
+}
+sheetHead.addEventListener('pointerup', endDrag);
+sheetHead.addEventListener('pointercancel', endDrag);
+
+grabber.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowUp') { e.preventDefault(); setSheet('open'); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); setSheet('peek'); }
+});
+
+window.addEventListener('resize', () => {
+  measure();
+  sheet.style.top = geo.yOpen + 'px';
+  sheetSpring.jump(sheetState === 'open' ? 0 : geo.peekOffset);
+});
+
+/* ============================================================
+   Correspondence: copy → toast. The toast enters and exits
+   along the same top-edge path (rule 6), on a spring (rule 2).
+   ============================================================ */
+const toast = $('#toast');
+const toastSpring = new Spring({ value: -1, response: 0.5, damping: 0.9, onUpdate: (p) => {
+  toast.style.opacity = String(clamp(p + 1, 0, 1));
+  toast.style.transform = `translate3d(-50%, ${p * 170}%, 0)`;
+  toast.style.pointerEvents = p > -0.95 ? 'auto' : 'none';
+}});
+let toastTimer = null;
+function showToast(title, sub) {
+  $('#toastTitle').textContent = title;
+  $('#toastSub').textContent = sub;
+  clearTimeout(toastTimer);
+  toastSpring.jump(-1);
+  toastSpring.to(0, 0);
+  toastTimer = setTimeout(() => toastSpring.to(-1, 0), 2600);
+}
+toast.addEventListener('click', () => { clearTimeout(toastTimer); toastSpring.to(-1, 0); });
+
+const copyBtn = $('#copyBtn'), addr = $('#emailAddr');
+copyBtn.addEventListener('click', () => {
+  const text = addr.textContent.trim();
+  const done = () => showToast('Copied', text + ' is on your clipboard.');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, done);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    ta.remove(); done();
+  }
+});
+</script>
+</body>
+</html>

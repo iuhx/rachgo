@@ -1,0 +1,11 @@
+# local tooling
+.wrangler/
+node_modules/
+
+# os noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editors
+*.swp
