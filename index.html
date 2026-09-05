@@ -978,6 +978,7 @@ function renderProjectEntries(entries) {
       nameEl = document.createElement('span');
     }
     nameEl.classList.add('p-name');
+    item.append(nameEl);
     if (pr.desc) {
       const desc = document.createElement('p');
       desc.className = 'p-desc'; desc.textContent = pr.desc;
