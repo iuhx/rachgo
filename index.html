@@ -978,21 +978,19 @@ function renderProjectEntries(entries) {
       nameEl = document.createElement('span');
     }
     nameEl.classList.add('p-name');
-    const desc = document.createElement('p');
-    desc.className = 'p-desc'; desc.textContent = pr.desc;
-    item.append(nameEl, desc);
+    if (pr.desc) {
+      const desc = document.createElement('p');
+      desc.className = 'p-desc'; desc.textContent = pr.desc;
+      item.append(desc);
+    }
     list.appendChild(item);
   }
 }
 async function renderProjects() {
-  // serve from cache first — instant for the visitor, gentle on the API limit
-  try {
-    const cached = JSON.parse(localStorage.getItem('gh-repos') || 'null');
-    if (cached && Array.isArray(cached.repos) && Date.now() - cached.t < 6 * 3600e3) {
-      renderProjectEntries(cached.repos);
-      return;
-    }
-  } catch (_) {}
+  // stale-while-revalidate: paint the cache instantly, then refresh from GitHub
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem('gh-repos') || 'null'); } catch (_) {}
+  if (cached && Array.isArray(cached.repos)) renderProjectEntries(cached.repos);
   try {
     const res = await fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`, {
       headers: { 'Accept': 'application/vnd.github+json' },
@@ -1003,11 +1001,12 @@ async function renderProjects() {
       .map((r) => ({ name: r.name, desc: r.description || '', url: r.html_url }));
     if (repos.length) {
       try { localStorage.setItem('gh-repos', JSON.stringify({ t: Date.now(), repos })); } catch (_) {}
-      renderProjectEntries(repos);
+      const same = cached && JSON.stringify(cached.repos) === JSON.stringify(repos);
+      if (!same) renderProjectEntries(repos);
       return;
     }
   } catch (_) {}
-  renderProjectEntries(FALLBACK_PROJECTS);
+  if (!cached) renderProjectEntries(FALLBACK_PROJECTS);
 }
 renderProjects();
 
