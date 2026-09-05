@@ -20,7 +20,7 @@
 <link rel="preload" href="fonts/sora.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cinzel.woff2" as="font" type="font/woff2" crossorigin>
-<title>rachg.com — a personal homepage</title>
+<title>rachg</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308090c'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23f8fafc' font-family='Georgia,serif'%3ER%3C/text%3E%3C/svg%3E">
 <style>
   /* ---------- Self-hosted fonts (no external requests, CN-friendly) ---------- */
@@ -163,7 +163,13 @@
   }
   .plate dd { font-family: var(--font-serif); font-size: 24px; color: var(--text); letter-spacing: .02em; }
   .plate dd .dim { color: var(--text-3); font-size: 16px; }
-  @media (max-width: 560px) { .plate { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) {
+    .plate { grid-template-columns: 1fr; gap: 8px; }
+    .plate .cell { padding: 11px 14px 10px; }
+    .plate dt { font-size: 9px; letter-spacing: .2em; margin-bottom: 4px; }
+    .plate dd { font-size: 16px; }
+    .plate dd .dim { font-size: 13px; }
+  }
 
   /* ---------- Charter preview rows ---------- */
   .clauses { margin: 58px 0 0; border-top: 1px solid var(--hairline); }
