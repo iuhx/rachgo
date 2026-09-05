@@ -283,7 +283,7 @@
     touch-action: none;
   }
   .reader-head {
-    position: relative; flex: none; padding: 10px 16px 12px;
+    flex: none; padding: 10px 16px 12px;
     cursor: grab; user-select: none; touch-action: none;
   }
   .reader-head:active { cursor: grabbing; }
@@ -291,13 +291,6 @@
     display: block; width: 42px; height: 5px; border-radius: 3px;
     background: rgba(255,255,255,.28); margin: 0 auto;
     cursor: grab; touch-action: none; padding: 0; border: 0;
-  }
-  .reader-close {
-    position: absolute; right: 16px; top: 5px;
-    font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
-    color: var(--text-2);
-    background: rgba(255,255,255,.06); border: 1px solid var(--hairline);
-    border-radius: 999px; padding: 7px 14px; cursor: pointer; will-change: transform;
   }
   .reader-body {
     flex: 1; overflow-y: auto; overscroll-behavior: contain;
@@ -512,7 +505,6 @@
 <div class="reader" id="reader" role="dialog" aria-modal="true" aria-label="Article reader" aria-hidden="true">
   <div class="reader-head" id="readerHead">
     <button class="grabber" id="readerGrabber" aria-label="Close article"></button>
-    <button class="reader-close" id="readerClose" data-press>Close</button>
   </div>
   <div class="reader-body" id="readerBody">
     <p class="r-date" id="rDate"></p>
@@ -763,7 +755,6 @@ function mdToHtml(src) {
 
 /* ---------- Reader: springs up over everything, drag down to dismiss ---------- */
 const reader = $('#reader'), readerHead = $('#readerHead'), readerBody = $('#readerBody');
-const readerClose = $('#readerClose');
 const readerGeo = { ih: 0 };
 function measureReader() {
   readerGeo.ih = window.innerHeight;
@@ -815,7 +806,6 @@ function closeReader(velocity = 0) {
   // strip the shareable hash without adding a history entry
   if (/^#\/article\//.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
 }
-readerClose.addEventListener('click', () => closeReader(0));
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && readerOpen) closeReader(0);
 });
@@ -841,7 +831,6 @@ const readerTracker = makeTracker();
 let readerDrag = null;
 readerHead.addEventListener('pointerdown', (e) => {
   if (e.button && e.button !== 0) return;
-  if (e.target.closest('#readerClose')) return;   // the Close button is not a handle
   e.preventDefault();
   readerHead.setPointerCapture(e.pointerId);
   readerTracker.reset(e.clientX, e.clientY, e.timeStamp);
