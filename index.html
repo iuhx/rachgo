@@ -160,7 +160,10 @@
     text-align: left; padding: 20px 6px; cursor: pointer;
     border-bottom: 1px solid var(--hairline); will-change: transform;
   }
-  .clause .no { font-family: var(--font-serif); font-size: 14px; color: var(--text-3); flex: none; }
+  .clause .no {
+    font-family: var(--font-serif); font-size: 14px; color: var(--text-3);
+    flex: none; width: 2.6em;   /* i. / ii. / iii. share one width — titles align */
+  }
   .clause .txt {
     flex: 1; font-size: 15px; font-weight: 400; letter-spacing: .12em;
     text-transform: uppercase; color: var(--text); opacity: .92;
@@ -217,6 +220,21 @@
     color: var(--text-3); margin-bottom: 14px;
   }
   .section > p { font-size: 14px; line-height: 1.65; color: var(--text-2); }
+
+  .rail { border-left: 1px solid var(--hairline); margin-left: 4px; }
+  .rail .stop { position: relative; padding: 0 0 22px 20px; }
+  .rail .stop:last-child { padding-bottom: 4px; }
+  .rail .stop::before {
+    content: ""; position: absolute; left: -3.5px; top: 7px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(248,250,252,.55); box-shadow: 0 0 12px rgba(248,250,252,.35);
+  }
+  .rail .era { font-family: var(--font-serif); font-size: 18px; letter-spacing: .1em; color: var(--text); }
+  .rail .note {
+    margin-top: 6px; font-size: 13.5px; font-weight: 300; line-height: 1.6;
+    color: var(--text-2); letter-spacing: -0.004em;
+  }
+  .rail .empty { font-size: 13px; color: var(--text-3); padding: 2px 0 6px 20px; }
 
   .article-list .article {
     display: flex; align-items: baseline; gap: 16px; width: 100%;
@@ -403,8 +421,8 @@
     </dl>
 
     <div class="clauses anim" style="--i:9" aria-label="Sections">
-      <button class="clause" data-press data-goto="sec-articles">
-        <span class="no">i.</span><span class="txt">Articles</span><span class="chev" aria-hidden="true">›</span>
+      <button class="clause" data-press data-goto="sec-notices">
+        <span class="no">i.</span><span class="txt">Notices</span><span class="chev" aria-hidden="true">›</span>
       </button>
       <button class="clause" data-press data-goto="sec-projects">
         <span class="no">ii.</span><span class="txt">Projects</span><span class="chev" aria-hidden="true">›</span>
@@ -430,19 +448,23 @@
     </div>
   </div>
   <div class="sheet-body" id="sheetBody">
-    <div class="section" id="sec-articles">
-      <h4>Articles</h4>
-      <div class="article-list" id="articleList"><!-- rendered from the articles/ folder --></div>
+    <div class="section" id="sec-notices">
+      <h4>Notices</h4>
+      <div class="rail" id="noticesRail"><!-- rendered from the NOTICES array in the script --></div>
     </div>
     <div class="section" id="sec-projects">
       <h4>Projects</h4>
-      <div class="project-list" id="projectList"><!-- rendered from the PROJECTS array in the script --></div>
+      <div class="project-list" id="projectList"><!-- pulled live from GitHub, manual fallback in the script --></div>
     </div>
     <div class="section" id="sec-about">
       <h4>About</h4>
       <p>rachg.com is my home base. I'm a freelance developer — I design and build
          things for the web, for clients and for myself. No feed, no algorithm here:
-         just a page, a few notes, and a mailbox. Fresh writing lands in the articles first.</p>
+         just a page, a few notes, and a mailbox.</p>
+    </div>
+    <div class="section" id="sec-articles">
+      <h4>Articles</h4>
+      <div class="article-list" id="articleList"><!-- rendered from the articles/ folder --></div>
     </div>
     <div class="section" id="sec-correspondence">
       <h4>Correspondence</h4>
@@ -790,21 +812,50 @@ window.addEventListener('resize', () => {
   readerSpring.jump(readerOpen ? 0 : readerGeo.ih);
 });
 
-const PROJECTS = [
-  { name: 'rachg.com', desc: 'This homepage — a single-file study in fluid interface design.', url: '' },
-  { name: 'Project Two', desc: 'Replace these entries with your own work in the PROJECTS array.', url: '' },
+/* ---------- Notices (row i) — add a line at the top to publish ---------- */
+const NOTICES = [
+  { date: 'Sep 2026', text: 'rachg.com is live. Notices land here first — small, infrequent, true.' },
 ];
-function renderProjects() {
+function renderNotices() {
+  const rail = $('#noticesRail');
+  rail.textContent = '';
+  if (!NOTICES.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'Nothing yet — the first notice is on its way.';
+    rail.appendChild(p);
+    return;
+  }
+  for (const n of NOTICES) {
+    const stop = document.createElement('div');
+    stop.className = 'stop';
+    const era = document.createElement('p');
+    era.className = 'era'; era.textContent = n.date;
+    const note = document.createElement('p');
+    note.className = 'note'; note.textContent = n.text;
+    stop.append(era, note);
+    rail.appendChild(stop);
+  }
+}
+renderNotices();
+
+/* ---------- Projects (row ii) — pulled live from GitHub, with a
+   manual fallback for when the API can't be reached. ---------- */
+const GITHUB_USER = 'iuhx';
+const FALLBACK_PROJECTS = [
+  { name: 'rachgo', desc: 'This homepage — a single-file study in fluid interface design.', url: 'https://github.com/iuhx/rachgo' },
+];
+function renderProjectEntries(entries) {
   const list = $('#projectList');
   list.textContent = '';
-  if (!PROJECTS.length) {
+  if (!entries.length) {
     const p = document.createElement('p');
     p.className = 'empty';
     p.textContent = 'Nothing here yet.';
     list.appendChild(p);
     return;
   }
-  for (const pr of PROJECTS) {
+  for (const pr of entries) {
     const item = document.createElement('div');
     item.className = 'project';
     let nameEl;
@@ -818,8 +869,6 @@ function renderProjects() {
       nameEl.append(pr.name, arrow);
     } else {
       nameEl = document.createElement('span');
-      nameEl.className = 'p-name';
-      nameEl.textContent = pr.name;
     }
     nameEl.classList.add('p-name');
     const desc = document.createElement('p');
@@ -827,6 +876,31 @@ function renderProjects() {
     item.append(nameEl, desc);
     list.appendChild(item);
   }
+}
+async function renderProjects() {
+  // serve from cache first — instant for the visitor, gentle on the API limit
+  try {
+    const cached = JSON.parse(localStorage.getItem('gh-repos') || 'null');
+    if (cached && Array.isArray(cached.repos) && Date.now() - cached.t < 6 * 3600e3) {
+      renderProjectEntries(cached.repos);
+      return;
+    }
+  } catch (_) {}
+  try {
+    const res = await fetch(`https://api.github.com/users/${GITHUB_USER}/repos?sort=updated&per_page=100`, {
+      headers: { 'Accept': 'application/vnd.github+json' },
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const repos = (await res.json())
+      .filter((r) => !r.fork)
+      .map((r) => ({ name: r.name, desc: r.description || '', url: r.html_url }));
+    if (repos.length) {
+      try { localStorage.setItem('gh-repos', JSON.stringify({ t: Date.now(), repos })); } catch (_) {}
+      renderProjectEntries(repos);
+      return;
+    }
+  } catch (_) {}
+  renderProjectEntries(FALLBACK_PROJECTS);
 }
 renderProjects();
 
