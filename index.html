@@ -840,6 +840,7 @@ function mdToHtml(src) {
 
 /* ---------- Reader: springs up over everything, drag down to dismiss ---------- */
 const reader = $('#reader'), readerHead = $('#readerHead'), readerBody = $('#readerBody');
+const readerGrabber = $('#readerGrabber');
 const readerGeo = { ih: 0 };
 function measureReader() {
   readerGeo.ih = window.innerHeight;
@@ -871,6 +872,7 @@ function openArticle(file, fromHash = false) {
   syncInert();
   readerSpring.to(0, 0);
   updateReaderNav();
+  if (!fromHash) readerGrabber.focus({ preventScroll: true });   // move keyboard focus into the reader
   if (!fromHash) {
     const h = '#/article/' + encodeURIComponent(file);
     if (location.hash !== h) location.hash = h;   // shareable, back-button friendly
@@ -897,7 +899,9 @@ function closeReader(velocity = 0) {
   if (readerOpener) { readerOpener.focus?.({ preventScroll: true }); readerOpener = null; }
 }
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && readerOpen) closeReader(0);
+  if (e.key !== 'Escape') return;
+  if (readerOpen) closeReader(0);
+  else if (sheetState === 'open') setSheet('peek');
 });
 /* Deep links: #/article/<file> — shareable, survives refresh, back works. */
 window.addEventListener('hashchange', () => {
@@ -948,6 +952,9 @@ function readerEndDrag(e) {
 }
 readerHead.addEventListener('pointerup', readerEndDrag);
 readerHead.addEventListener('pointercancel', readerEndDrag);
+readerGrabber.addEventListener('click', (e) => {
+  if (e.detail === 0) closeReader(0);   // keyboard activation; pointer taps close via the head
+});
 
 window.addEventListener('resize', () => {
   measureReader();
@@ -1149,9 +1156,9 @@ setTimeout(() => sheetSpring.to(geo.peekOffset, 0), REDUCED.matches ? 0 : 540);
 let sheetState = 'peek';
 let sheetOpener = null;
 function syncInert() {
-  const blocked = sheetState === 'open' || readerOpen;
-  nav.inert = blocked;
-  scroller.inert = blocked;
+  // the nav keeps its Close/Dossier button alive — it is the sheet's own close path
+  scroller.inert = sheetState === 'open' || readerOpen;
+  nav.inert = readerOpen;   // the reader is a modal with close paths of its own
 }
 function setSheet(state, velocity = 0) {
   sheetState = state;
@@ -1162,9 +1169,9 @@ function setSheet(state, velocity = 0) {
   detailsBtn.setAttribute('aria-expanded', String(open));
   if (open) detailsBtn.textContent = 'Close';
   else detailsBtn.textContent = 'Dossier';
+  if (open) sheetOpener = document.activeElement;   // capture before inert moves focus to body
   syncInert();
   if (open) {
-    sheetOpener = document.activeElement;
     grabber.focus({ preventScroll: true });
   } else if (sheetOpener) {
     sheetOpener.focus?.({ preventScroll: true });
