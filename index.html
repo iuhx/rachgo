@@ -37,7 +37,7 @@
     --hairline: rgba(255,255,255,.08);
     --hairline-strong: rgba(255,255,255,.18);
     --glass-bg: rgba(13,15,20,.55);
-    --glass-strong: rgba(13,15,20,.80);
+    --glass-strong: rgba(13,15,20,.78);
     --radius-card: 20px;
     --nav-h: 52px;
     --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -226,6 +226,7 @@
     position: fixed; left: 50%; top: 0; z-index: 50;
     width: min(680px, 100%);
     height: var(--sheet-h, 92vh);
+    height: var(--sheet-h, 92dvh);
     transform: translate3d(-50%, 100vh, 0);
     will-change: transform;
     background: var(--glass-strong);
@@ -249,6 +250,16 @@
   .sheet::after {                 /* pointer-tracked sheen over the whole sheet */
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background: radial-gradient(430px circle at var(--mx, 30%) var(--my, 12%), rgba(255,255,255,.065), transparent 62%);
+  }
+  .sheet .lens, .reader .lens {   /* edge lensing: brighten + re-saturate a thin band of the backdrop */
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    padding: 2px;
+    -webkit-backdrop-filter: brightness(1.16) saturate(160%);
+    backdrop-filter: brightness(1.16) saturate(160%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
   }
   .sheet-head { flex: none; padding: 8px 24px 14px; cursor: grab; user-select: none; touch-action: none; }
   .sheet-head:active { cursor: grabbing; }
@@ -316,9 +327,10 @@
     position: fixed; left: 50%; top: 0; z-index: 55;
     width: min(680px, 100%);
     height: var(--reader-h, 100vh);
+    height: var(--reader-h, 100dvh);
     transform: translate3d(-50%, 100vh, 0);
     will-change: transform;
-    background: rgba(10,11,15,.93);
+    background: rgba(10,11,15,.82);
     -webkit-backdrop-filter: blur(34px) saturate(190%) brightness(1.04);
     backdrop-filter: blur(34px) saturate(190%) brightness(1.04);
     border: 1px solid var(--hairline); border-bottom: none;
@@ -336,8 +348,12 @@
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
   }
+  .reader::after {                /* faint pointer-tracked sheen (kept subtle for reading) */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(430px circle at var(--mx, 30%) var(--my, 8%), rgba(255,255,255,.04), transparent 62%);
+  }
   .reader-head {
-    flex: none; padding: 10px 16px 12px;
+    flex: none; padding: calc(10px + env(safe-area-inset-top)) 16px 12px;
     cursor: grab; user-select: none; touch-action: none;
   }
   .reader-head:active { cursor: grabbing; }
@@ -348,7 +364,7 @@
   }
   .reader-body {
     flex: 1; overflow-y: auto; overscroll-behavior: contain;
-    padding: 8px 30px 64px;
+    padding: 8px 30px calc(64px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--hairline);
     touch-action: pan-y;
     scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.14) transparent;
@@ -457,6 +473,18 @@
   @media (prefers-reduced-motion: reduce) {
     .blob-a, .blob-b, .blob-c { animation: none; }
   }
+  /* no backdrop-filter support → keep text readable on solid surfaces */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .plate .cell, .sheet, .reader, .nav::before { background: rgba(10,11,15,.97); }
+  }
+  /* phones & touch: cheaper glass, no ambient blob animation */
+  @media (max-width: 560px), (pointer: coarse) {
+    .blob-a, .blob-b, .blob-c { animation: none; }
+    .plate .cell, .sheet, .reader {
+      -webkit-backdrop-filter: blur(24px) saturate(175%);
+      backdrop-filter: blur(24px) saturate(175%);
+    }
+  }
 </style>
 </head>
 <body>
@@ -533,7 +561,8 @@
   </div>
 </main>
 
-<section class="sheet" id="sheet" role="dialog" aria-label="Dossier — notices, projects and contact" aria-modal="false">
+<section class="sheet" id="sheet" role="dialog" aria-label="Dossier" aria-modal="false">
+  <div class="lens" aria-hidden="true"></div>
   <div class="sheet-head" id="sheetHead">
     <button class="grabber" id="grabber" data-press aria-label="Toggle dossier sheet" aria-expanded="false"></button>
     <div class="row">
@@ -558,6 +587,7 @@
 </section>
 
 <div class="reader" id="reader" role="dialog" aria-modal="true" aria-label="Article reader" aria-hidden="true">
+  <div class="lens" aria-hidden="true"></div>
   <div class="reader-head" id="readerHead">
     <button class="grabber" id="readerGrabber" aria-label="Close article"></button>
   </div>
@@ -824,6 +854,7 @@ const readerSpring = new Spring({
 readerSpring.jump(readerGeo.ih);
 
 let readerOpen = false, readerFile = null;
+let readerOpener = null;
 const mdCache = new Map();
 
 function openArticle(file, fromHash = false) {
@@ -835,7 +866,9 @@ function openArticle(file, fromHash = false) {
   content.innerHTML = '<p class="r-loading">Loading…</p>';
   readerBody.scrollTop = 0;
   reader.setAttribute('aria-hidden', 'false');
+  if (!readerOpen) readerOpener = document.activeElement;
   readerOpen = true;
+  syncInert();
   readerSpring.to(0, 0);
   updateReaderNav();
   if (!fromHash) {
@@ -860,6 +893,8 @@ function closeReader(velocity = 0) {
   readerSpring.to(readerGeo.ih, velocity);      // exits along the same path it entered
   // strip the shareable hash without adding a history entry
   if (/^#\/article\//.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
+  syncInert();
+  if (readerOpener) { readerOpener.focus?.({ preventScroll: true }); readerOpener = null; }
 }
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && readerOpen) closeReader(0);
@@ -1112,6 +1147,12 @@ sheetSpring.jump(geo.H);                   // fully off-screen
 setTimeout(() => sheetSpring.to(geo.peekOffset, 0), REDUCED.matches ? 0 : 540);
 
 let sheetState = 'peek';
+let sheetOpener = null;
+function syncInert() {
+  const blocked = sheetState === 'open' || readerOpen;
+  nav.inert = blocked;
+  scroller.inert = blocked;
+}
 function setSheet(state, velocity = 0) {
   sheetState = state;
   sheetSpring.to(state === 'open' ? 0 : geo.peekOffset, velocity);
@@ -1121,6 +1162,14 @@ function setSheet(state, velocity = 0) {
   detailsBtn.setAttribute('aria-expanded', String(open));
   if (open) detailsBtn.textContent = 'Close';
   else detailsBtn.textContent = 'Dossier';
+  syncInert();
+  if (open) {
+    sheetOpener = document.activeElement;
+    grabber.focus({ preventScroll: true });
+  } else if (sheetOpener) {
+    sheetOpener.focus?.({ preventScroll: true });
+    sheetOpener = null;
+  }
 }
 const toggleSheet = () => setSheet(sheetState === 'open' ? 'peek' : 'open');
 
@@ -1210,9 +1259,19 @@ window.addEventListener('resize', () => {
   sheetSpring.jump(sheetState === 'open' ? 0 : geo.peekOffset);
   for (const [, rec] of rowPanels) if (rec.open) rec.sp.jump(rec.inner.scrollHeight);
 });
+/* iOS toolbar collapse fires on visualViewport, not always on window */
+if (window.visualViewport) {
+  visualViewport.addEventListener('resize', () => {
+    measureReader();
+    readerSpring.jump(readerOpen ? 0 : readerGeo.ih);
+    measure();
+    sheet.style.top = geo.yOpen + 'px';
+    sheetSpring.jump(sheetState === 'open' ? 0 : geo.peekOffset);
+  });
+}
 
 /* ---------- Liquid glass: specular sheen follows the pointer ---------- */
-[sheet, ...document.querySelectorAll('.plate .cell')].forEach((el) => {
+[sheet, reader, ...document.querySelectorAll('.plate .cell')].forEach((el) => {
   el.addEventListener('pointermove', (e) => {
     const r = el.getBoundingClientRect();
     el.style.setProperty('--mx', (e.clientX - r.left).toFixed(1) + 'px');
