@@ -149,14 +149,30 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 64px;
   }
   .plate .cell {
+    position: relative; overflow: hidden;
     background: var(--glass-bg);
-    -webkit-backdrop-filter: blur(22px) saturate(150%);
-    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(170%) brightness(1.05);
+    backdrop-filter: blur(22px) saturate(170%) brightness(1.05);
     border: 1px solid var(--hairline);
     border-radius: var(--radius-card);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 14px 34px rgba(0,0,0,.32);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 -1px 0 rgba(255,255,255,.03), 0 14px 34px rgba(0,0,0,.32);
     padding: 18px 16px 16px;
   }
+  .plate .cell::before {          /* gradient specular edge */
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    padding: 1px;
+    background: linear-gradient(160deg, rgba(255,255,255,.34), rgba(255,255,255,.05) 30%, rgba(255,255,255,0) 55%, rgba(255,255,255,.10));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  .plate .cell::after {           /* pointer-tracked sheen */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(190px circle at var(--mx, 50%) var(--my, 30%), rgba(255,255,255,.11), transparent 65%);
+    opacity: 0; transition: opacity .35s ease;
+  }
+  .plate .cell:hover::after { opacity: 1; }
   .plate dt {
     font-size: 10px; font-weight: 400; letter-spacing: .24em; text-transform: uppercase;
     color: var(--text-3); margin-bottom: 10px;
@@ -207,13 +223,26 @@
     transform: translate3d(-50%, 100vh, 0);
     will-change: transform;
     background: var(--glass-strong);
-    -webkit-backdrop-filter: blur(30px) saturate(160%);
-    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(34px) saturate(190%) brightness(1.05);
+    backdrop-filter: blur(34px) saturate(190%) brightness(1.05);
     border: 1px solid var(--hairline); border-bottom: none;
     border-radius: 22px 22px 0 0;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 -20px 70px rgba(0,0,0,.5);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -1px 0 rgba(255,255,255,.04), 0 -20px 70px rgba(0,0,0,.5);
     display: flex; flex-direction: column;
     touch-action: none;
+  }
+  .sheet::before {                /* gradient specular edge */
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    padding: 1px;
+    background: linear-gradient(165deg, rgba(255,255,255,.40), rgba(255,255,255,.06) 26%, rgba(255,255,255,0) 52%, rgba(255,255,255,.14));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+  .sheet::after {                 /* pointer-tracked sheen over the whole sheet */
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(430px circle at var(--mx, 30%) var(--my, 12%), rgba(255,255,255,.065), transparent 62%);
   }
   .sheet-head { flex: none; padding: 8px 24px 14px; cursor: grab; user-select: none; touch-action: none; }
   .sheet-head:active { cursor: grabbing; }
@@ -284,13 +313,22 @@
     transform: translate3d(-50%, 100vh, 0);
     will-change: transform;
     background: rgba(10,11,15,.93);
-    -webkit-backdrop-filter: blur(30px) saturate(160%);
-    backdrop-filter: blur(30px) saturate(160%);
+    -webkit-backdrop-filter: blur(34px) saturate(190%) brightness(1.04);
+    backdrop-filter: blur(34px) saturate(190%) brightness(1.04);
     border: 1px solid var(--hairline); border-bottom: none;
     border-radius: 22px 22px 0 0;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 -20px 70px rgba(0,0,0,.55);
     display: flex; flex-direction: column;
     touch-action: none;
+  }
+  .reader::before {               /* gradient specular edge */
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    padding: 1px;
+    background: linear-gradient(165deg, rgba(255,255,255,.40), rgba(255,255,255,.06) 26%, rgba(255,255,255,0) 52%, rgba(255,255,255,.14));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
   }
   .reader-head {
     flex: none; padding: 10px 16px 12px;
@@ -1162,6 +1200,15 @@ window.addEventListener('resize', () => {
   sheet.style.top = geo.yOpen + 'px';
   sheetSpring.jump(sheetState === 'open' ? 0 : geo.peekOffset);
   for (const [, rec] of rowPanels) if (rec.open) rec.sp.jump(rec.inner.scrollHeight);
+});
+
+/* ---------- Liquid glass: specular sheen follows the pointer ---------- */
+[sheet, ...document.querySelectorAll('.plate .cell')].forEach((el) => {
+  el.addEventListener('pointermove', (e) => {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left).toFixed(1) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top).toFixed(1) + 'px');
+  });
 });
 
 /* ============================================================
