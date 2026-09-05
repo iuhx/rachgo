@@ -155,10 +155,14 @@
 
   /* ---------- Charter preview rows ---------- */
   .clauses { margin: 58px 0 0; border-top: 1px solid var(--hairline); }
+  .clause-block { border-bottom: 1px solid var(--hairline); }
+  .panel { height: 0; overflow: hidden; will-change: height; }
+  .panel-inner { padding: 2px 0 20px calc(2.6em + 20px); }
+  .panel-inner > p { font-size: 14px; line-height: 1.65; color: var(--text-2); }
   .clause {
     display: flex; align-items: baseline; gap: 20px; width: 100%;
     text-align: left; padding: 20px 6px; cursor: pointer;
-    border-bottom: 1px solid var(--hairline); will-change: transform;
+    will-change: transform;
   }
   .clause .no {
     font-family: var(--font-serif); font-size: 14px; color: var(--text-3);
@@ -170,6 +174,7 @@
   }
   .clause .chev { color: var(--text-3); font-size: 15px; flex: none; transition: transform .2s ease; }
   .clause:hover .chev { transform: translateX(3px); }
+  .clause.open .chev { transform: rotate(90deg); }
 
   .footnote {
     margin-top: 40px; padding-bottom: 4px; text-align: center;
@@ -421,15 +426,38 @@
     </dl>
 
     <div class="clauses anim" style="--i:9" aria-label="Sections">
-      <button class="clause" data-press data-goto="sec-notices">
-        <span class="no">i.</span><span class="txt">Notices</span><span class="chev" aria-hidden="true">›</span>
-      </button>
-      <button class="clause" data-press data-goto="sec-projects">
-        <span class="no">ii.</span><span class="txt">Projects</span><span class="chev" aria-hidden="true">›</span>
-      </button>
-      <button class="clause" data-press data-goto="sec-about">
-        <span class="no">iii.</span><span class="txt">About</span><span class="chev" aria-hidden="true">›</span>
-      </button>
+      <div class="clause-block">
+        <button class="clause" data-press data-toggle="panel-notices" aria-expanded="false" aria-controls="panel-notices">
+          <span class="no">i.</span><span class="txt">Notices</span><span class="chev" aria-hidden="true">›</span>
+        </button>
+        <div class="panel" id="panel-notices">
+          <div class="panel-inner">
+            <div class="rail" id="noticesRail"><!-- rendered from the NOTICES array --></div>
+          </div>
+        </div>
+      </div>
+      <div class="clause-block">
+        <button class="clause" data-press data-toggle="panel-projects" aria-expanded="false" aria-controls="panel-projects">
+          <span class="no">ii.</span><span class="txt">Projects</span><span class="chev" aria-hidden="true">›</span>
+        </button>
+        <div class="panel" id="panel-projects">
+          <div class="panel-inner">
+            <div class="project-list" id="projectList"><!-- pulled live from GitHub --></div>
+          </div>
+        </div>
+      </div>
+      <div class="clause-block">
+        <button class="clause" data-press data-toggle="panel-about" aria-expanded="false" aria-controls="panel-about">
+          <span class="no">iii.</span><span class="txt">About</span><span class="chev" aria-hidden="true">›</span>
+        </button>
+        <div class="panel" id="panel-about">
+          <div class="panel-inner">
+            <p>rachg.com is my home base. I'm a freelance developer — I design and build
+               things for the web, for clients and for myself. No feed, no algorithm here:
+               just a page, a few notes, and a mailbox.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <p class="footnote anim" style="--i:10">
@@ -448,20 +476,6 @@
     </div>
   </div>
   <div class="sheet-body" id="sheetBody">
-    <div class="section" id="sec-notices">
-      <h4>Notices</h4>
-      <div class="rail" id="noticesRail"><!-- rendered from the NOTICES array in the script --></div>
-    </div>
-    <div class="section" id="sec-projects">
-      <h4>Projects</h4>
-      <div class="project-list" id="projectList"><!-- pulled live from GitHub, manual fallback in the script --></div>
-    </div>
-    <div class="section" id="sec-about">
-      <h4>About</h4>
-      <p>rachg.com is my home base. I'm a freelance developer — I design and build
-         things for the web, for clients and for myself. No feed, no algorithm here:
-         just a page, a few notes, and a mailbox.</p>
-    </div>
     <div class="section" id="sec-articles">
       <h4>Articles</h4>
       <div class="article-list" id="articleList"><!-- rendered from the articles/ folder --></div>
@@ -1021,17 +1035,38 @@ detailsBtn.addEventListener('click', () => {
 });
 document.querySelectorAll('[data-open-sheet]').forEach((el) =>
   el.addEventListener('click', () => setSheet('open')));
-/* Sections rows (i. ii. iii.) open the dossier at the right place. */
-document.querySelectorAll('[data-goto]').forEach((el) =>
-  el.addEventListener('click', () => {
-    setSheet('open');
-    const target = document.getElementById(el.dataset.goto);
-    if (target) {
-      // smooth scroll needs a visible page; jump instantly when hidden
-      const behavior = (REDUCED.matches || document.hidden) ? 'auto' : 'smooth';
-      sheetBody.scrollTo({ top: Math.max(0, target.offsetTop - 10), behavior });
-    }
-  }));
+/* ---------- Rows expand in place — spring accordion, one open at a time ---------- */
+const rowPanels = new Map();
+document.querySelectorAll('[data-toggle]').forEach((btn) => {
+  const panel = document.getElementById(btn.dataset.toggle);
+  const inner = panel.querySelector('.panel-inner');
+  const sp = new Spring({ value: 0, response: 0.4, damping: 0.82, onUpdate: (h) => {
+    panel.style.height = h + 'px';
+  }});
+  rowPanels.set(btn.dataset.toggle, { btn, panel, inner, sp, open: false });
+  btn.addEventListener('click', () => {
+    const opening = !rowPanels.get(btn.dataset.toggle).open;
+    for (const [id] of rowPanels) if (id !== btn.dataset.toggle) closePanel(id);
+    if (opening) openPanel(btn.dataset.toggle);
+    else closePanel(btn.dataset.toggle);
+  });
+});
+function openPanel(id) {
+  const rec = rowPanels.get(id);
+  if (!rec || rec.open) return;
+  rec.open = true;
+  rec.btn.classList.add('open');
+  rec.btn.setAttribute('aria-expanded', 'true');
+  rec.sp.to(rec.inner.scrollHeight, 0);        // spring to the content's real height
+}
+function closePanel(id) {
+  const rec = rowPanels.get(id);
+  if (!rec || !rec.open) return;
+  rec.open = false;
+  rec.btn.classList.remove('open');
+  rec.btn.setAttribute('aria-expanded', 'false');
+  rec.sp.to(0, 0);
+}
 
 /* Tap on the grabber toggles (keyboard-friendly); the pointer
    path is handled by the head's pointerup below. */
@@ -1079,6 +1114,7 @@ window.addEventListener('resize', () => {
   measure();
   sheet.style.top = geo.yOpen + 'px';
   sheetSpring.jump(sheetState === 'open' ? 0 : geo.peekOffset);
+  for (const [, rec] of rowPanels) if (rec.open) rec.sp.jump(rec.inner.scrollHeight);
 });
 
 /* ============================================================
