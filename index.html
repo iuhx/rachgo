@@ -1048,6 +1048,7 @@ function intro(el, { dy = 30, blur = 8, scale = 0.94, delay = 0, response = 0.55
     if (blur) el.style.filter = `blur(${(1 - p) * blur}px)`;
   }});
   if (REDUCED.matches) { sp.jump(1); return; }
+  sp.onUpdate(0);                              // hold hidden until this block's turn (no first-paint flash)
   setTimeout(() => sp.to(1, 0), delay);
 }
 document.querySelectorAll('.ltr').forEach((el, i) => intro(el, { delay: 100 + i * 50, dy: 46, blur: 12, scale: 0.9 }));
