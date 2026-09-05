@@ -1,16 +1,15 @@
-# glassblog: this site, as a template
+# glassblog: fork my blog
 
-Somewhere between writing a spring library and rebuilding a footer, it became
-obvious that this site's stack was quietly turning into a product: one HTML
-file that renders markdown from a folder, a publish script that regenerates
-the feed and pushes, a static deploy to Cloudflare's edge.
+This site runs on a small stack I like a lot: one HTML file that renders
+markdown from a folder, a publish script that regenerates the feed and pushes,
+a static deploy to Cloudflare's edge.
 
-So the stack got its own repository:
-[glassblog](https://github.com/iuhx/glassblog).
+That stack now exists as a separate repository — as a **demo for you to
+fork**, not as this site's source. It's called
+[glassblog](https://github.com/iuhx/glassblog): fork it, press the deploy
+button, set four values in a config file, and you have the same blog with
+your own name on it. Single file, markdown folder, RSS, liquid glass and all.
+Nothing to build, nothing to break.
 
-Fork it, press the deploy button, and you have a blog. Single file, markdown
-folder, RSS, liquid glass and all. Your name, tagline and email live in one
-`config.js` — four values, and the wordmark, the tab and the footer follow.
-There is nothing to build and nothing to break.
-
-This site runs the exact same template. It just has more articles.
+My copy lives in [rachgo](https://github.com/iuhx/rachgo) and stays personal —
+it keeps the quirks, the experiments, and articles like this one.
