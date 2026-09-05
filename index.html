@@ -5,12 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="description" content="rachg.com — a personal home on the web: notes, work, and a way to say hello.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="rachg.com — a personal homepage">
+<meta property="og:description" content="A personal home on the web — what I'm building, what I'm thinking, and a way to say hello.">
+<meta property="og:url" content="https://rachg.com/">
+<meta name="twitter:card" content="summary">
+<link rel="alternate" type="application/rss+xml" title="rachg.com" href="/rss.xml">
 <title>rachg.com — a personal homepage</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308090c'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23f8fafc' font-family='Georgia,serif'%3ER%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com" rel="preconnect">
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ---------- Self-hosted fonts (no external requests, CN-friendly) ---------- */
+  @font-face { font-family: 'Sora'; font-style: normal; font-weight: 300 700; font-display: swap; src: url('fonts/sora.woff2') format('woff2'); }
+  @font-face { font-family: 'Inter'; font-style: normal; font-weight: 300 600; font-display: swap; src: url('fonts/inter.woff2') format('woff2'); }
+  @font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 500 700; font-display: swap; src: url('fonts/cinzel.woff2') format('woff2'); }
+
   /* ---------- Tokens (rachg obsidian/platinum palette, Apple materials) ---------- */
   :root {
     --bg: #08090c;
@@ -332,6 +340,17 @@
   .r-content hr { border: 0; border-top: 1px solid var(--hairline); margin: 26px 0; }
   .r-content img { max-width: 100%; border-radius: 12px; }
   .r-loading { font-size: 14px; color: var(--text-3); padding: 20px 0; line-height: 1.7; }
+  .r-nav {
+    display: flex; justify-content: space-between; gap: 12px;
+    margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--hairline);
+  }
+  .r-nav-btn {
+    font: inherit; font-size: 13px; font-weight: 400; color: var(--text-2);
+    background: rgba(255,255,255,.05); border: 1px solid var(--hairline);
+    border-radius: 12px; padding: 11px 16px; cursor: pointer; will-change: transform;
+    max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .r-nav-btn:hover { color: var(--text); border-color: var(--hairline-strong); }
 
   .project-list .project { padding: 13px 2px; border-bottom: 1px solid var(--hairline); }
   .project-list .project:last-child { border-bottom: none; }
@@ -500,6 +519,10 @@
     <p class="r-date" id="rDate"></p>
     <h1 class="r-title" id="rTitle"></h1>
     <div class="r-content" id="rContent"></div>
+    <div class="r-nav">
+      <button class="r-nav-btn" id="rPrev" data-press hidden></button>
+      <button class="r-nav-btn" id="rNext" data-press hidden></button>
+    </div>
   </div>
 </div>
 
@@ -693,6 +716,9 @@ async function loadArticles() {
     return;
   }
   renderArticleList();
+  // deep link: open the article named in the URL hash, if any
+  const m = location.hash.match(/^#\/article\/(.+)$/);
+  if (m) openArticle(decodeURIComponent(m[1]), true);
 }
 loadArticles();
 
@@ -755,7 +781,7 @@ readerSpring.jump(readerGeo.ih);
 let readerOpen = false, readerFile = null;
 const mdCache = new Map();
 
-function openArticle(file) {
+function openArticle(file, fromHash = false) {
   readerFile = file;
   const meta = articleMeta(file);
   $('#rDate').textContent = meta.date;
@@ -766,6 +792,11 @@ function openArticle(file) {
   reader.setAttribute('aria-hidden', 'false');
   readerOpen = true;
   readerSpring.to(0, 0);
+  updateReaderNav();
+  if (!fromHash) {
+    const h = '#/article/' + encodeURIComponent(file);
+    if (location.hash !== h) location.hash = h;   // shareable, back-button friendly
+  }
   if (mdCache.has(file)) { content.innerHTML = mdToHtml(mdCache.get(file)); return; }
   fetch(`${ARTICLES_DIR}/${encodeURIComponent(file)}`, { cache: 'no-store' })
     .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.text(); })
@@ -782,11 +813,30 @@ function closeReader(velocity = 0) {
   readerOpen = false;
   reader.setAttribute('aria-hidden', 'true');
   readerSpring.to(readerGeo.ih, velocity);      // exits along the same path it entered
+  // strip the shareable hash without adding a history entry
+  if (/^#\/article\//.test(location.hash)) history.replaceState(null, '', location.pathname + location.search);
 }
 readerClose.addEventListener('click', () => closeReader(0));
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && readerOpen) closeReader(0);
 });
+/* Deep links: #/article/<file> — shareable, survives refresh, back works. */
+window.addEventListener('hashchange', () => {
+  const m = location.hash.match(/^#\/article\/(.+)$/);
+  if (m) {
+    const file = decodeURIComponent(m[1]);
+    if (!readerOpen || readerFile !== file) openArticle(file, true);
+  } else if (readerOpen) closeReader(0);
+});
+function updateReaderNav() {
+  const i = articleFiles.indexOf(readerFile);
+  const newer = i > 0 ? articleFiles[i - 1] : null;
+  const older = i >= 0 && i < articleFiles.length - 1 ? articleFiles[i + 1] : null;
+  const pb = $('#rPrev'), nb = $('#rNext');
+  pb.hidden = !newer; nb.hidden = !older;
+  if (newer) { pb.textContent = '← ' + articleMeta(newer).title; pb.onclick = () => openArticle(newer); }
+  if (older) { nb.textContent = articleMeta(older).title + ' →'; nb.onclick = () => openArticle(older); }
+}
 
 const readerTracker = makeTracker();
 let readerDrag = null;
