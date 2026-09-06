@@ -17,6 +17,7 @@ rss.xml         feed, regenerated on publish
 robots.txt      crawler rules + sitemap pointer
 sitemap.xml     regenerated on publish
 _headers        security & caching headers
+site/           deployment output, built by publish.mjs (what Cloudflare serves)
 wrangler.jsonc  Cloudflare Workers static-assets config
 ```
 
@@ -43,8 +44,13 @@ The date prefix shows beside the title; every article gets a shareable
 ## Deploy (Cloudflare Workers)
 
 ```sh
-npx wrangler deploy
+node publish.mjs --ci --deploy   # sync content → build site/ → wrangler deploy
 ```
 
-No Worker script — the site is served as static assets, straight from this folder.
-Connect the repo in the Cloudflare dashboard (Workers Builds) to deploy on every push.
+`publish.mjs` assembles the deployment into `site/` — only what visitors need
+(index.html, articles, notices, about, fonts, feeds). `.git`, README and
+repo-only files are never uploaded.
+
+On Cloudflare (Workers Builds), set the **build command** to
+`node publish.mjs --ci` and the deploy command to `npx wrangler deploy` —
+then every push rebuilds `site/` and deploys.

@@ -4,8 +4,10 @@
   "name": "rachgo",
   "compatibility_date": "2026-09-01",
   "assets": {
-    "directory": "./",
-    // "/" serves ./index.html
+    // publish.mjs builds this folder from the repo — .git and source
+    // files (README, publish.mjs…) are never uploaded
+    "directory": "./site",
+    // "/" serves ./site/index.html
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }

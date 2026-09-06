@@ -8,10 +8,11 @@
  *
  * Workflow: drop `YYYY-MM-DD-my-post.md` into articles/, then run this.
  */
-import { readdirSync, statSync, writeFileSync } from 'node:fs';
+import { readdirSync, statSync, writeFileSync, rmSync, mkdirSync, cpSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const SITE_URL = 'https://rachg.com';   // ← change once the custom domain is live
+const SITE_DIR = 'site';                // deployment output — wrangler.jsonc serves this folder
 
 const titleFrom = (f) => f
   .replace(/\.md$/i, '')
@@ -96,20 +97,38 @@ writeFileSync('sitemap.xml',
   '</urlset>\n');
 console.log('sitemap.xml written (lastmod ' + newest + ')');
 
+/* 2c. Build the deployment folder — only what the visitor needs.
+   .git, README, publish.mjs and other repo files never get uploaded. */
+rmSync(SITE_DIR, { recursive: true, force: true });
+mkdirSync(SITE_DIR, { recursive: true });
+for (const f of ['index.html', '404.html', '_headers', 'robots.txt', 'sitemap.xml', 'rss.xml', 'og-image.png']) {
+  if (existsSync(f)) cpSync(f, SITE_DIR + '/' + f);
+}
+for (const dir of ['articles', 'notices', 'about', 'fonts']) {
+  if (existsSync(dir)) cpSync(dir, SITE_DIR + '/' + dir, { recursive: true });
+}
+console.log('site/ synced → ready for deploy');
+
 /* 3. Commit + push (+ deploy) */
+const IN_CI = !!process.env.CI;
+const NO_GIT = process.argv.includes('--no-git');
 if (process.argv.includes('--dry')) {
   console.log('dry run — no git, no deploy');
   process.exit(0);
 }
 
 const sh = (cmd) => execSync(cmd, { stdio: 'inherit' });
-sh('git add -A');
-try {
-  execSync('git diff --cached --quiet');
-  console.log('nothing new to commit');
-} catch (_) {
-  sh('git commit -m "publish: update articles"');
-  sh('git push');
+if (IN_CI || NO_GIT) {
+  console.log('CI/flag detected — skipping git (Cloudflare will deploy the committed site/)');
+} else {
+  sh('git add -A');
+  try {
+    execSync('git diff --cached --quiet');
+    console.log('nothing new to commit');
+  } catch (_) {
+    sh('git commit -m "publish: update content"');
+    sh('git push');
+  }
 }
 if (process.argv.includes('--deploy')) sh('npx wrangler deploy');
 console.log('done ✓');
