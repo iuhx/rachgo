@@ -12,7 +12,7 @@ Everything on the site is a markdown file in a folder.
 
 - **Articles** — drop `YYYY-MM-DD-HHMMSS-my-post.md` into `articles/`, list it in
   `articles/index.json` (newest first). The timestamp keeps same-day posts in
-  publish order; the web shows the month and year beside the title, and every
+  publish order; the web shows the month, day and year beside the title, and every
   article gets a shareable `#/article/<file>` link.
 - **Notices** — short announcements in `notices/`, same filename
   convention, shown as a dated timeline on the front page.
