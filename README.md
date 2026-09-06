@@ -1,60 +1,76 @@
 # rachgo
 
-[rachg.com](https://rachg.com) — a personal home on the web. Single-page, single-file,
-built as a study in Apple-style fluid interface design: interruptible springs, gesture
-velocity hand-off, momentum projection and glass materials.
+[rachg.com](https://rachg.com) — my personal home on the web. A single HTML
+file that renders markdown from folders, built as a study in Apple-style
+fluid interface design: interruptible springs, gesture velocity hand-off,
+momentum projection, liquid glass materials. Designed and built with AI
+agents.
+
+## Write
+
+Everything on the site is a markdown file in a folder.
+
+- **Articles** — drop `YYYY-MM-DD-my-post.md` into `articles/`, list it in
+  `articles/index.json` (newest first). The date prefix becomes the date
+  beside the title, and every article gets a shareable
+  `#/article/<file>` link.
+- **Notices** — short announcements in `notices/`, same filename
+  convention, shown as a dated timeline on the front page.
+- **About** — the About panel is the body of `about/index.md`.
+
+With the Cloudflare build command configured (see Deploy), a push is the
+whole publishing process — the indexes, feed and sitemap are regenerated
+from the folders on Cloudflare's side. Or run it yourself:
+
+```sh
+node publish.mjs            # regenerate indexes + feed + sitemap + site/, commit, push
+```
+
+## Deploy
+
+**Workers Builds (recommended)** — connect the repo in the Cloudflare
+dashboard:
+
+```text
+Build command:  node publish.mjs --ci
+Deploy command: npx wrangler deploy
+```
+
+Every push rebuilds the deployment on Cloudflare's side and ships it
+atomically — failed builds never take the running site down.
+
+**From your machine:**
+
+```sh
+node publish.mjs --ci --deploy
+```
 
 ## Structure
 
 ```
-index.html      the whole site (name, tagline and email are set here)
-articles/       markdown articles + index.json
-notices/        one-line-ish notices, newest first (shown in row i)
-about/index.md  the About panel body (row iii)
+index.html      the whole site — layout, springs, markdown renderer
+404.html        quiet not-found page
+og-image.png    share-card image (1200×630)
+articles/       posts, one markdown file each (+ index.json)
+notices/        short announcements (+ index.json)
+about/index.md  the About panel body
 fonts/          self-hosted Sora / Inter / Cinzel (variable woff2)
-publish.mjs     one-command publishing (articles + notices)
+publish.mjs     one-command publishing
 rss.xml         feed, regenerated on publish
-robots.txt      crawler rules + sitemap pointer
 sitemap.xml     regenerated on publish
+robots.txt      crawler rules + sitemap pointer
 _headers        security & caching headers
 wrangler.jsonc  Cloudflare Workers static-assets config
 ```
 
-## Notices & about
+`site/` is the deployment folder `publish.mjs` assembles for
+`npx wrangler deploy` — generated, git-ignored, never edited.
 
-Notices are markdown files in `notices/`, named `YYYY-MM-DD-slug.md` —
-the date prefix becomes the date shown beside the notice, the body renders
-as markdown. About is the body of `about/index.md`. Both refresh when you
-publish.
+## Feedback
 
-## Publish an article
+The site is three days old and already asking for it: open an issue, or
+write to [hello@rachg.com](mailto:hello@rachg.com).
 
-1. Drop `YYYY-MM-DD-my-post.md` into `articles/`.
-2. Run:
+## License
 
-```sh
-node publish.mjs            # regenerates index.json + rss.xml, commits, pushes
-node publish.mjs --deploy   # … also runs `npx wrangler deploy`
-```
-
-The date prefix shows beside the title; every article gets a shareable
-`#/article/<file>` link that survives refresh and the back button.
-
-## Deploy (Cloudflare Workers)
-
-```sh
-node publish.mjs --ci --deploy   # sync content → build site/ → wrangler deploy
-```
-
-`publish.mjs` assembles the deployment into `site/` — only what visitors need
-(index.html, articles, notices, about, fonts, feeds). `.git`, README and
-repo-only files are never uploaded.
-
-On Cloudflare (Workers Builds), set the **build command** to
-`node publish.mjs --ci` and the deploy command to `npx wrangler deploy` —
-then every push rebuilds `site/` and deploys.
-
-> `site/` is generated and git-ignored. If you are migrating from the old
-> root-served layout, configure the build command **before** pushing the
-> commit that runs `git rm -r --cached site/` — otherwise the deploy would
-> have nothing to serve.
+[MIT](LICENSE)
