@@ -35,7 +35,7 @@ function fileStamp(dir, f) {
   const m = f.match(/^(\d{4}-\d{2}-\d{2})(?:-(\d{6}))?/);
   if (m) {
     const time = m[2] ? m[2].replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '00:00:00';
-    const d = Date.parse(m[1] + 'T' + time + ':00' + TZ);
+    const d = Date.parse(m[1] + 'T' + time + TZ);
     return isNaN(d) ? statSync(dir + '/' + f).mtime.getTime() : d;
   }
   return statSync(dir + '/' + f).mtime.getTime();   // no (valid) prefix → fall back to mtime
@@ -45,7 +45,7 @@ function orderNewestFirst(dir) {
   return readdirSync(dir)
     .filter((f) => f.toLowerCase().endsWith('.md'))
     .map((f) => ({ f, t: fileStamp(dir, f) }))
-    .sort((a, b) => (b.t - a.t) || a.f.localeCompare(b.f))
+    .sort((a, b) => (b.t - a.t) || (a.f < b.f ? -1 : a.f > b.f ? 1 : 0))   // deterministic tiebreak (no localeCompare)
     .map((x) => x.f);
 }
 
