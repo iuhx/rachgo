@@ -1,16 +1,25 @@
 # Welcome to the writing desk
 
 This is the first article on rachg.com — and a live cheat-sheet for how
-articles work here.
+writing works here.
 
-## How to publish
+## Articles
 
 1. Drop a `.md` file into the **articles** folder, next to this page.
-2. Add its filename to `articles/index.json` — newest first.
-3. Reload. It shows up in the dossier list, and reads like this page.
+2. List the filename in `articles/index.json` — newest first, or let
+   `node publish.mjs` do it for you (it also refreshes the feed).
+3. Push. Cloudflare rebuilds, the article goes live.
 
 Name a file with a `YYYY-MM-DD-` prefix and the date appears beside the
 title, like the one above.
+
+## Notices & about
+
+Short announcements live in the **notices** folder — same idea, smaller
+form. A `YYYY-MM-DD-slug.md` file there becomes a dated line on the front
+page, and its body renders as markdown too.
+
+The About panel reads `about/index.md` — blank line between paragraphs.
 
 ## What renders
 
