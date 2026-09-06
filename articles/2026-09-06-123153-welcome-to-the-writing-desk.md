@@ -10,8 +10,8 @@ writing works here.
    `node publish.mjs` do it for you (it also refreshes the feed).
 3. Push. Cloudflare rebuilds, the article goes live.
 
-Name a file with a `YYYY-MM-DD-` prefix and the date appears beside the
-title, like the one above.
+Name a file with a `YYYY-MM-DD-HHMMSS-` prefix and the date · time appear
+beside the title, like the one above.
 
 ## Notices & about
 

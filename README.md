@@ -10,10 +10,10 @@ agents.
 
 Everything on the site is a markdown file in a folder.
 
-- **Articles** — drop `YYYY-MM-DD-my-post.md` into `articles/`, list it in
-  `articles/index.json` (newest first). The date prefix becomes the date
-  beside the title, and every article gets a shareable
-  `#/article/<file>` link.
+- **Articles** — drop `YYYY-MM-DD-HHMMSS-my-post.md` into `articles/`, list it in
+  `articles/index.json` (newest first). The timestamp becomes the date · time
+  beside the title, keeps same-day posts in publish order, and every article
+  gets a shareable `#/article/<file>` link.
 - **Notices** — short announcements in `notices/`, same filename
   convention, shown as a dated timeline on the front page.
 - **About** — the About panel is the body of `about/index.md`.

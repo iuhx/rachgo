@@ -731,26 +731,49 @@ function makeTracker() {
 
 /* ============================================================
    Articles — a plain folder of markdown files.
-   1. Drop `my-post.md` into the articles/ folder next to this page.
-   2. List the filename in articles/index.json (newest first).
-   Name a file `2026-09-05-my-post.md` and its date shows too.
+   1. Drop `YYYY-MM-DD-HHMMSS-my-post.md` into the articles/ folder
+      next to this page.
+   2. List the filename in articles/index.json (newest first) — or let
+      publish.mjs do it. The timestamp keeps same-day posts in publish
+      order and gives the feed an exact time; published names are
+      permanent (renames break feed GUIDs).
    ============================================================ */
 const ARTICLES_DIR = 'articles';
 let articleFiles = [];
 
+/* Renamed articles keep their old links alive: old filename → current filename.
+   When you rename an article, add an alias here. */
+const FILE_ALIASES = {
+  '2026-09-05-catching-the-liquid-glass.md': '2026-09-05-184524-catching-the-liquid-glass.md',
+  '2026-09-05-glassblog.md': '2026-09-05-185058-glassblog.md',
+  '2026-09-05-springlet.md': '2026-09-05-184524-springlet.md',
+  '2026-09-05-welcome-to-the-writing-desk.md': '2026-09-06-123153-welcome-to-the-writing-desk.md',
+  '2026-09-06-day-three-point-at-the-seams.md': '2026-09-06-123153-day-three-point-at-the-seams.md',
+  '2026-09-06-pointing-at-my-own-seams.md': '2026-09-06-211847-pointing-at-my-own-seams.md',
+};
+const resolveAlias = (file) => FILE_ALIASES[file] || file;
+
 function articleMeta(file) {
-  let rest = file.replace(/\.md$/i, ''), date = '';
-  const m = rest.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
+  let rest = file.replace(/\.md$/i, ''), date = '', stamp = null;
+  const m = rest.match(/^(\d{4})-(\d{2})-(\d{2})(?:-(\d{6}))?-(.+)$/);
   if (m) {
-    const d = new Date(m[1] + 'T00:00:00');
-    if (!isNaN(d)) date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    rest = m[2];
+    // the filename clock is the author's wall clock (UTC+8) — pinned, so
+    // every visitor and build environment agrees on the instant
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const mo = MONTHS[parseInt(m[2], 10) - 1];
+    const da = parseInt(m[3], 10);
+    date = mo + ' ' + da + ', ' + m[1];
+    if (m[4]) date += ' · ' + m[4].slice(0, 2) + ':' + m[4].slice(2, 4);
+    stamp = Date.parse(m[1] + '-' + m[2] + '-' + m[3] + 'T'
+      + (m[4] ? m[4].slice(0, 2) + ':' + m[4].slice(2, 4) + ':' + m[4].slice(4, 6) : '00:00:00')
+      + '+08:00');
+    rest = m[5];
   }
   const SMALL = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'to', 'of', 'in', 'on', 'for', 'with', 'at', 'by']);
   const title = rest.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ')
     .map((w, i) => (i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))
     .join(' ');
-  return { date, title };
+  return { date, title, stamp };
 }
 
 function renderArticleList() {
@@ -871,6 +894,7 @@ let readerOpener = null;
 const mdCache = new Map();
 
 function openArticle(file, fromHash = false) {
+  file = resolveAlias(file);
   readerFile = file;
   const meta = articleMeta(file);
   $('#rDate').textContent = meta.date;
@@ -915,11 +939,12 @@ document.addEventListener('keydown', (e) => {
   if (readerOpen) closeReader(0);
   else if (sheetState === 'open') setSheet('peek');
 });
-/* Deep links: #/article/<file> — shareable, survives refresh, back works. */
+/* Deep links: #/article/<file> — shareable, survives refresh, back works.
+   Old (renamed) filenames resolve through FILE_ALIASES. */
 window.addEventListener('hashchange', () => {
   const m = location.hash.match(/^#\/article\/(.+)$/);
   if (m) {
-    const file = decodeURIComponent(m[1]);
+    const file = resolveAlias(decodeURIComponent(m[1]));
     if (!readerOpen || readerFile !== file) openArticle(file, true);
   } else if (readerOpen) closeReader(0);
 });
@@ -1011,8 +1036,9 @@ function renderNotices(entries) {
 }
 function prettyDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso + 'T00:00:00');
-  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // pinned to the author's wall clock (UTC+8) — same label everywhere
+  const d = new Date(iso + 'T00:00:00+08:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Shanghai' });
 }
 async function loadNotices() {
   const offline = [{ date: 'Sep 5, 2026', html: '<p>rachg.com is live. Notices land here first — small, infrequent, true.</p>' }];

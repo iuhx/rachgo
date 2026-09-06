@@ -17,7 +17,7 @@ const SITE_DIR = 'site';                // deployment output — wrangler.jsonc 
 
 const titleFrom = (f) => f
   .replace(/\.md$/i, '')
-  .replace(/^\d{4}-\d{2}-\d{2}-/, '')
+  .replace(/^\d{4}-\d{2}-\d{2}(?:-\d{6})?-/, '')
   .replace(/[-_]+/g, ' ')
   .trim();
 
@@ -26,30 +26,35 @@ const dateFrom = (f) => {
   return m ? m[1] : null;
 };
 
-/* 1. Scan articles/, newest first (date prefix wins, fallback: file mtime) */
-const files = readdirSync('articles')
-  .filter((f) => f.toLowerCase().endsWith('.md'))
-  .map((f) => {
-    const iso = dateFrom(f);
-    const t = iso ? new Date(iso + 'T00:00:00') : statSync('articles/' + f).mtime;
-    return { f, t };
-  })
-  .sort((a, b) => b.t - a.t)
-  .map((x) => x.f);
+/* 1. Scan articles/, newest first — ordering comes entirely from the
+   filename: `YYYY-MM-DD-HHMMSS-slug.md` (time optional; date-only files
+   sort at midnight). No git, no mtimes, pinned to UTC+8 — every
+   environment agrees. */
+const TZ = '+08:00';                            // the author's wall clock
+function fileStamp(dir, f) {
+  const m = f.match(/^(\d{4}-\d{2}-\d{2})(?:-(\d{6}))?/);
+  if (m) {
+    const time = m[2] ? m[2].replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : '00:00:00';
+    const d = Date.parse(m[1] + 'T' + time + ':00' + TZ);
+    return isNaN(d) ? statSync(dir + '/' + f).mtime.getTime() : d;
+  }
+  return statSync(dir + '/' + f).mtime.getTime();   // no (valid) prefix → fall back to mtime
+}
 
+function orderNewestFirst(dir) {
+  return readdirSync(dir)
+    .filter((f) => f.toLowerCase().endsWith('.md'))
+    .map((f) => ({ f, t: fileStamp(dir, f) }))
+    .sort((a, b) => (b.t - a.t) || a.f.localeCompare(b.f))
+    .map((x) => x.f);
+}
+
+const files = orderNewestFirst('articles');
 writeFileSync('articles/index.json', JSON.stringify(files, null, 2) + '\n');
 console.log(files.length ? 'index.json ← ' + files.join(', ') : 'index.json ← (no articles found)');
 
-/* 1b. Scan notices/, newest first (date prefix wins, fallback: file mtime) */
-const noticeFiles = readdirSync('notices')
-  .filter((f) => f.toLowerCase().endsWith('.md'))
-  .map((f) => {
-    const iso = dateFrom(f);
-    const t = iso ? new Date(iso + 'T00:00:00') : statSync('notices/' + f).mtime;
-    return { f, t };
-  })
-  .sort((a, b) => b.t - a.t)
-  .map((x) => x.f);
+/* 1b. Scan notices/, same ordering rules as articles */
+const noticeFiles = orderNewestFirst('notices');
 
 writeFileSync('notices/index.json', JSON.stringify(noticeFiles, null, 2) + '\n');
 console.log(noticeFiles.length ? 'notices/index.json ← ' + noticeFiles.join(', ') : 'notices/index.json ← (no notices found)');
@@ -59,8 +64,7 @@ if (unprefixed.length) console.log('⚠ notices without a YYYY-MM-DD- prefix wil
 /* 2. Regenerate rss.xml */
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const items = files.map((f) => {
-  const iso = dateFrom(f);
-  const d = iso ? new Date(iso + 'T00:00:00') : statSync('articles/' + f).mtime;
+  const d = new Date(fileStamp('articles', f));
   const link = SITE_URL + '/#/article/' + encodeURIComponent(f);
   return [
     '    <item>',
@@ -81,22 +85,27 @@ writeFileSync('rss.xml',
   items + '\n' +
   '</channel></rss>\n');
 /* 2b. sitemap.xml — canonical entry page; lastmod follows the freshest
-       content change (newest article, newest notice, or about/index.md) */
-const newest = [
-  files.length ? (dateFrom(files[0]) ? dateFrom(files[0]) : statSync('articles/' + files[0]).mtime.toISOString().slice(0, 10)) : null,
-  noticeFiles.length ? (dateFrom(noticeFiles[0]) ? dateFrom(noticeFiles[0]) : statSync('notices/' + noticeFiles[0]).mtime.toISOString().slice(0, 10)) : null,
-  statSync('about/index.md').mtime.toISOString().slice(0, 10),
-].filter(Boolean).sort().pop() || '2026-09-05';
+       content stamp (newest article, newest notice, or about/index.md) */
+const newestStamp = Math.max(
+  files.length ? fileStamp('articles', files[0]) : 0,
+  noticeFiles.length ? fileStamp('notices', noticeFiles[0]) : 0,
+  existsSync('about/index.md') ? statSync('about/index.md').mtime.getTime() : 0
+);
+const localISODate = (ms) => {
+  const d = new Date(ms);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+};
+const lastmod = localISODate(newestStamp || Date.now());
 
 writeFileSync('sitemap.xml',
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
   '  <url>\n' +
   '    <loc>' + SITE_URL + '/</loc>\n' +
-  '    <lastmod>' + newest + '</lastmod>\n' +
+  '    <lastmod>' + lastmod + '</lastmod>\n' +
   '  </url>\n' +
   '</urlset>\n');
-console.log('sitemap.xml written (lastmod ' + newest + ')');
+console.log('sitemap.xml written (lastmod ' + lastmod + ')');
 
 /* 2c. Build the deployment folder — only what the visitor needs.
    .git, README, publish.mjs and other repo files never get uploaded. */
