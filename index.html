@@ -735,7 +735,8 @@ function makeTracker() {
       next to this page.
    2. List the filename in articles/index.json (newest first) — or let
       publish.mjs do it. The timestamp keeps same-day posts in publish
-      order and gives the feed an exact time; published names are
+      order and gives the feed an exact time; the web shows month + year;
+      published names are
       permanent (renames break feed GUIDs).
    ============================================================ */
 const ARTICLES_DIR = 'articles';
@@ -762,8 +763,7 @@ function articleMeta(file) {
     const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const mo = MONTHS[parseInt(m[2], 10) - 1];
     const da = parseInt(m[3], 10);
-    date = mo + ' ' + da + ', ' + m[1];
-    if (m[4]) date += ' · ' + m[4].slice(0, 2) + ':' + m[4].slice(2, 4);
+    date = mo + ' ' + m[1];
     stamp = Date.parse(m[1] + '-' + m[2] + '-' + m[3] + 'T'
       + (m[4] ? m[4].slice(0, 2) + ':' + m[4].slice(2, 4) + ':' + m[4].slice(4, 6) : '00:00:00')
       + '+08:00');
@@ -1038,10 +1038,10 @@ function prettyDate(iso) {
   if (!iso) return '';
   // pinned to the author's wall clock (UTC+8) — same label everywhere
   const d = new Date(iso + 'T00:00:00+08:00');
-  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Shanghai' });
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'Asia/Shanghai' });
 }
 async function loadNotices() {
-  const offline = [{ date: 'Sep 5, 2026', html: '<p>rachg.com is live. Notices land here first — small, infrequent, true.</p>' }];
+  const offline = [{ date: 'Sep 2026', html: '<p>rachg.com is live. Notices land here first — small, infrequent, true.</p>' }];
   if (location.protocol === 'file:') { renderNotices(offline); return; }
   try {
     const res = await fetch('notices/index.json', { cache: 'no-store' });

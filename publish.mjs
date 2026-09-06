@@ -7,7 +7,7 @@
  *   node publish.mjs --ci       regenerate everything, build site/, but skip git (for Workers Builds)
  *   node publish.mjs --dry      regenerate content + site/ only, no git / deploy
  *
- * Workflow: drop `YYYY-MM-DD-my-post.md` into articles/, then run this.
+ * Workflow: drop `YYYY-MM-DD-HHMMSS-my-post.md` into articles/, then run this.
  */
 import { readdirSync, statSync, writeFileSync, rmSync, mkdirSync, cpSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
