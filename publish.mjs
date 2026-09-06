@@ -38,6 +38,20 @@ const files = readdirSync('articles')
 writeFileSync('articles/index.json', JSON.stringify(files, null, 2) + '\n');
 console.log(files.length ? 'index.json ← ' + files.join(', ') : 'index.json ← (no articles found)');
 
+/* 1b. Scan notices/, newest first (date prefix wins, fallback: file mtime) */
+const noticeFiles = readdirSync('notices')
+  .filter((f) => f.toLowerCase().endsWith('.md'))
+  .map((f) => {
+    const iso = dateFrom(f);
+    const t = iso ? new Date(iso + 'T00:00:00') : statSync('notices/' + f).mtime;
+    return { f, t };
+  })
+  .sort((a, b) => b.t - a.t)
+  .map((x) => x.f);
+
+writeFileSync('notices/index.json', JSON.stringify(noticeFiles, null, 2) + '\n');
+console.log(noticeFiles.length ? 'notices/index.json ← ' + noticeFiles.join(', ') : 'notices/index.json ← (no notices found)');
+
 /* 2. Regenerate rss.xml */
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const items = files.map((f) => {

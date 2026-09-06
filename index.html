@@ -547,7 +547,7 @@
         </button>
         <div class="panel" id="panel-about">
           <div class="panel-inner">
-            <p>rachg.com is my home base. I'm a freelance developer — I design and build
+            <p id="aboutText">rachg.com is my home base. I'm a freelance developer — I design and build
                things for the web, for clients and for myself. No feed, no algorithm here:
                just a page, a few notes, and a mailbox.</p>
           </div>
@@ -961,21 +961,31 @@ window.addEventListener('resize', () => {
   readerSpring.jump(readerOpen ? 0 : readerGeo.ih);
 });
 
-/* ---------- Notices (row i) — add a line at the top to publish ---------- */
-const NOTICES = [
-  { date: 'Sep 2026', text: 'rachg.com is live. Notices land here first — small, infrequent, true.' },
-];
-function renderNotices() {
+/* ---------- Notices (row i) — md files in the notices/ folder.
+   Filename `YYYY-MM-DD-slug.md`; first line = the date label, blank line,
+   then the notice body. Publish = drop a file in + push. ---------- */
+const noticeMeta = (file) => {
+  const m = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
+  const rest = m ? m[2] : file;
+  const SMALL = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'to', 'of', 'in', 'on', 'for', 'with', 'at', 'by']);
+  return {
+    date: m ? m[1] : '',
+    title: rest.replace(/\.md$/i, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ')
+      .map((w, i) => (i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+      .join(' '),
+  };
+};
+function renderNotices(entries) {
   const rail = $('#noticesRail');
   rail.textContent = '';
-  if (!NOTICES.length) {
+  if (!entries.length) {
     const p = document.createElement('p');
     p.className = 'empty';
     p.textContent = 'Nothing yet — the first notice is on its way.';
     rail.appendChild(p);
     return;
   }
-  for (const n of NOTICES) {
+  for (const n of entries) {
     const stop = document.createElement('div');
     stop.className = 'stop';
     const era = document.createElement('p');
@@ -986,7 +996,54 @@ function renderNotices() {
     rail.appendChild(stop);
   }
 }
-renderNotices();
+function prettyDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+async function loadNotices() {
+  const offline = [
+    { date: 'Sep 5, 2026', text: 'rachg.com is live. Notices land here first — small, infrequent, true.' },
+  ];
+  if (location.protocol === 'file:') { renderNotices(offline); return; }
+  try {
+    const res = await fetch('notices/index.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const files = (await res.json()).filter((f) => /\.md$/i.test(f));
+    const entries = await Promise.all(files.map(async (f) => {
+      const md = await (await fetch(`notices/${encodeURIComponent(f)}`, { cache: 'no-store' })).text();
+      const lines = md.replace(/\r\n?/g, '\n').split('\n');
+      const blank = lines.indexOf('');
+      const meta = noticeMeta(f);
+      return { date: prettyDate(meta.date) || (lines[0] || '').trim(), text: lines.slice(blank + 1).join(' ').trim() };
+    }));
+    renderNotices(entries.filter((e) => e.text));
+  } catch (_) {
+    renderNotices(offline);
+  }
+}
+loadNotices();
+
+/* ---------- About (row iii) — body text from about/index.md ---------- */
+async function loadAbout() {
+  if (location.protocol === 'file:') return;   // keep the inline default on file://
+  try {
+    const res = await fetch('about/index.md', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = (await res.text()).replace(/\r\n?/g, '\n').trim();
+    if (!text) return;
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    const holder = $('#aboutText');
+    holder.textContent = '';
+    for (const para of text.split(/\n{2,}/)) {
+      const el = document.createElement('p');
+      el.innerHTML = esc(para.trim());
+      holder.appendChild(el);
+    }
+  } catch (_) { /* keep the inline default */ }
+}
+loadAbout();
 
 /* ---------- Projects (row ii) — pulled live from GitHub, with a
    manual fallback for when the API can't be reached. ---------- */
