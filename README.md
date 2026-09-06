@@ -17,7 +17,6 @@ rss.xml         feed, regenerated on publish
 robots.txt      crawler rules + sitemap pointer
 sitemap.xml     regenerated on publish
 _headers        security & caching headers
-site/           deployment output, built by publish.mjs (what Cloudflare serves)
 wrangler.jsonc  Cloudflare Workers static-assets config
 ```
 
@@ -54,3 +53,8 @@ repo-only files are never uploaded.
 On Cloudflare (Workers Builds), set the **build command** to
 `node publish.mjs --ci` and the deploy command to `npx wrangler deploy` —
 then every push rebuilds `site/` and deploys.
+
+> `site/` is generated and git-ignored. If you are migrating from the old
+> root-served layout, configure the build command **before** pushing the
+> commit that runs `git rm -r --cached site/` — otherwise the deploy would
+> have nothing to serve.

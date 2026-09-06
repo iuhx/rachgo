@@ -2,9 +2,10 @@
 /**
  * One-command publishing for rachg.com.
  *
- *   node publish.mjs            scan articles/ → index.json + rss.xml → commit → push
+ *   node publish.mjs            articles/ + notices/ → indexes + rss.xml + sitemap + site/ → commit → push
  *   node publish.mjs --deploy   … also run `npx wrangler deploy` (or let Workers Builds do it)
- *   node publish.mjs --dry      regenerate index.json + rss.xml only, no git / deploy
+ *   node publish.mjs --ci       regenerate everything, build site/, but skip git (for Workers Builds)
+ *   node publish.mjs --dry      regenerate content + site/ only, no git / deploy
  *
  * Workflow: drop `YYYY-MM-DD-my-post.md` into articles/, then run this.
  */
@@ -111,7 +112,7 @@ console.log('site/ synced → ready for deploy');
 
 /* 3. Commit + push (+ deploy) */
 const IN_CI = !!process.env.CI;
-const NO_GIT = process.argv.includes('--no-git');
+const NO_GIT = process.argv.includes('--no-git') || process.argv.includes('--ci');
 if (process.argv.includes('--dry')) {
   console.log('dry run — no git, no deploy');
   process.exit(0);
@@ -119,7 +120,7 @@ if (process.argv.includes('--dry')) {
 
 const sh = (cmd) => execSync(cmd, { stdio: 'inherit' });
 if (IN_CI || NO_GIT) {
-  console.log('CI/flag detected — skipping git (Cloudflare will deploy the committed site/)');
+  console.log('CI/flag detected — skipping git (Workers Builds will deploy the freshly built site/)');
 } else {
   sh('git add -A');
   try {

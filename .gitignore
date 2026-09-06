@@ -1,6 +1,7 @@
 # local tooling
 .wrangler/
 node_modules/
+site/
 
 # os noise
 .DS_Store
