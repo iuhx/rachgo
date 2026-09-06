@@ -7,14 +7,15 @@ velocity hand-off, momentum projection and glass materials.
 ## Structure
 
 ```
-index.html      the whole site
-config.js       your name, tagline, email, site URL
+index.html      the whole site (name, tagline and email are set here)
 articles/       markdown articles + index.json
 notices/        one-line-ish notices, newest first (shown in row i)
 about/index.md  the About panel body (row iii)
 fonts/          self-hosted Sora / Inter / Cinzel (variable woff2)
 publish.mjs     one-command publishing (articles + notices)
 rss.xml         feed, regenerated on publish
+robots.txt      crawler rules + sitemap pointer
+sitemap.xml     regenerated on publish
 _headers        security & caching headers
 wrangler.jsonc  Cloudflare Workers static-assets config
 ```

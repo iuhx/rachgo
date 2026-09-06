@@ -78,7 +78,23 @@ writeFileSync('rss.xml',
   '  <description>Notes and projects from rachg.com</description>\n' +
   items + '\n' +
   '</channel></rss>\n');
-console.log('rss.xml written');
+/* 2b. sitemap.xml — canonical entry page; lastmod follows the freshest
+       content change (newest article, newest notice, or about/index.md) */
+const newest = [
+  files.length ? (dateFrom(files[0]) ? dateFrom(files[0]) : statSync('articles/' + files[0]).mtime.toISOString().slice(0, 10)) : null,
+  noticeFiles.length ? (dateFrom(noticeFiles[0]) ? dateFrom(noticeFiles[0]) : statSync('notices/' + noticeFiles[0]).mtime.toISOString().slice(0, 10)) : null,
+  statSync('about/index.md').mtime.toISOString().slice(0, 10),
+].filter(Boolean).sort().pop() || '2026-09-05';
+
+writeFileSync('sitemap.xml',
+  '<?xml version="1.0" encoding="UTF-8"?>\n' +
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+  '  <url>\n' +
+  '    <loc>' + SITE_URL + '/</loc>\n' +
+  '    <lastmod>' + newest + '</lastmod>\n' +
+  '  </url>\n' +
+  '</urlset>\n');
+console.log('sitemap.xml written (lastmod ' + newest + ')');
 
 /* 3. Commit + push (+ deploy) */
 if (process.argv.includes('--dry')) {
