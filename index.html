@@ -303,6 +303,16 @@
     margin-top: 6px; font-size: 13.5px; font-weight: 300; line-height: 1.6;
     color: var(--text-2); letter-spacing: -0.004em;
   }
+  .rail .note p { margin: 0 0 8px; }
+  .rail .note p:last-child { margin-bottom: 0; }
+  .rail .note strong { color: var(--text); font-weight: 600; }
+  .rail .note a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,.3); }
+  .rail .note code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px;
+    background: rgba(255,255,255,.07); border: 1px solid var(--hairline);
+    border-radius: 5px; padding: 1px 5px;
+  }
+  .rail .note ul, .rail .note ol { margin: 0 0 8px; padding-left: 20px; }
   .rail .empty { font-size: 13px; color: var(--text-3); padding: 2px 0 6px 20px; }
 
   .article-list .article {
@@ -547,9 +557,11 @@
         </button>
         <div class="panel" id="panel-about">
           <div class="panel-inner">
-            <p id="aboutText">rachg.com is my home base. I'm a freelance developer — I design and build
-               things for the web, for clients and for myself. No feed, no algorithm here:
-               just a page, a few notes, and a mailbox.</p>
+            <div id="aboutText">
+              <p>rachg.com is my home base. I'm a freelance developer — I design and build
+                 things for the web, for clients and for myself. No feed, no algorithm here:
+                 just a page, a few notes, and a mailbox.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -962,8 +974,9 @@ window.addEventListener('resize', () => {
 });
 
 /* ---------- Notices (row i) — md files in the notices/ folder.
-   Filename `YYYY-MM-DD-slug.md`; first line = the date label, blank line,
-   then the notice body. Publish = drop a file in + push. ---------- */
+   Filename `YYYY-MM-DD-slug.md` — the date prefix IS the date label
+   (shown beside the notice); the file body is the content, rendered as
+   markdown. Publish = drop a file in + push. ---------- */
 const noticeMeta = (file) => {
   const m = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)$/);
   const rest = m ? m[2] : file;
@@ -990,8 +1003,8 @@ function renderNotices(entries) {
     stop.className = 'stop';
     const era = document.createElement('p');
     era.className = 'era'; era.textContent = n.date;
-    const note = document.createElement('p');
-    note.className = 'note'; note.textContent = n.text;
+    const note = document.createElement('div');
+    note.className = 'note'; note.innerHTML = n.html;
     stop.append(era, note);
     rail.appendChild(stop);
   }
@@ -1002,45 +1015,39 @@ function prettyDate(iso) {
   return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 async function loadNotices() {
-  const offline = [
-    { date: 'Sep 5, 2026', text: 'rachg.com is live. Notices land here first — small, infrequent, true.' },
-  ];
+  const offline = [{ date: 'Sep 5, 2026', html: '<p>rachg.com is live. Notices land here first — small, infrequent, true.</p>' }];
   if (location.protocol === 'file:') { renderNotices(offline); return; }
   try {
     const res = await fetch('notices/index.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const files = (await res.json()).filter((f) => /\.md$/i.test(f));
-    const entries = await Promise.all(files.map(async (f) => {
-      const md = await (await fetch(`notices/${encodeURIComponent(f)}`, { cache: 'no-store' })).text();
-      const lines = md.replace(/\r\n?/g, '\n').split('\n');
-      const blank = lines.indexOf('');
-      const meta = noticeMeta(f);
-      return { date: prettyDate(meta.date) || (lines[0] || '').trim(), text: lines.slice(blank + 1).join(' ').trim() };
+    const settled = await Promise.allSettled(files.map(async (f) => {
+      const r = await fetch(`notices/${encodeURIComponent(f)}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return { file: f, md: await r.text() };
     }));
-    renderNotices(entries.filter((e) => e.text));
+    const entries = settled.flatMap((s) => {
+      if (s.status !== 'fulfilled') return [];          // a missing file is skipped, never rendered
+      const meta = noticeMeta(s.value.file);
+      const html = mdToHtml(s.value.md.trim());
+      if (!html) return [];
+      return [{ date: prettyDate(meta.date), html }];
+    });
+    renderNotices(entries);
   } catch (_) {
     renderNotices(offline);
   }
 }
 loadNotices();
 
-/* ---------- About (row iii) — body text from about/index.md ---------- */
+/* ---------- About (row iii) — markdown body from about/index.md ---------- */
 async function loadAbout() {
   if (location.protocol === 'file:') return;   // keep the inline default on file://
   try {
     const res = await fetch('about/index.md', { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = (await res.text()).replace(/\r\n?/g, '\n').trim();
-    if (!text) return;
-    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    const holder = $('#aboutText');
-    holder.textContent = '';
-    for (const para of text.split(/\n{2,}/)) {
-      const el = document.createElement('p');
-      el.innerHTML = esc(para.trim());
-      holder.appendChild(el);
-    }
+    if (text) $('#aboutText').innerHTML = mdToHtml(text);
   } catch (_) { /* keep the inline default */ }
 }
 loadAbout();

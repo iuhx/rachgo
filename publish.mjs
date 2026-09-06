@@ -51,6 +51,8 @@ const noticeFiles = readdirSync('notices')
 
 writeFileSync('notices/index.json', JSON.stringify(noticeFiles, null, 2) + '\n');
 console.log(noticeFiles.length ? 'notices/index.json ← ' + noticeFiles.join(', ') : 'notices/index.json ← (no notices found)');
+const unprefixed = noticeFiles.filter((f) => !dateFrom(f));
+if (unprefixed.length) console.log('⚠ notices without a YYYY-MM-DD- prefix will show no date:', unprefixed.join(', '));
 
 /* 2. Regenerate rss.xml */
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
