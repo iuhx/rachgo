@@ -1038,7 +1038,7 @@ function prettyDate(iso) {
   if (!iso) return '';
   // pinned to the author's wall clock (UTC+8) — same label everywhere
   const d = new Date(iso + 'T00:00:00+08:00');
-  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Shanghai' });
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Singapore' });
 }
 async function loadNotices() {
   const offline = [{ date: 'Sep 5, 2026', html: '<p>rachg.com is live. Notices land here first — small, infrequent, true.</p>' }];
