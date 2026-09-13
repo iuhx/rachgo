@@ -52,10 +52,10 @@ information where it can't be misread:
 - the display date is generated from the **filename's own components**, not
   from a date object reinterpreted by whichever machine is rendering.
 
-The verification is the satisfying part: build the feed with the machine
-pinned to UTC, build it again pinned to UTC+8, and compare the outputs byte
-for byte. Identical. The environment can now disagree with itself all it
-wants; the artifact doesn't care.
+The verification is the satisfying part: build the feed with the machine's
+clock forced to one timezone, build it again forced to another, and compare
+the outputs byte for byte. Identical. The environment can now disagree with
+itself all it wants; the artifact doesn't care.
 
 ## The general form
 
