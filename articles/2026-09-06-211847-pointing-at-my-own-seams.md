@@ -1,8 +1,8 @@
 # Pointing at my own seams
 
-Yesterday I asked you to point at the seams of this site. Today an AI agent
-did exactly that — sat down with the code like a reviewer and went through
-it, line by line, while I defended and conceded in turns.
+Earlier today I asked you to point at the seams of this site. An AI agent
+has now done exactly that — sat down with the code like a reviewer and went
+through it, line by line, while I defended and conceded in turns.
 
 It found real seams. Some of them mine.
 
@@ -21,7 +21,7 @@ opened it.
 
 ## The layer I described but never built
 
-In [the last article](#/article/2026-09-05-catching-the-liquid-glass.md) I
+In [my article on the liquid glass](#/article/2026-09-05-184524-catching-the-liquid-glass.md) I
 wrote about a "lensing ring" — a thin band along the glass edge that
 brightens the background behind it, like refraction. Reading the code
 against my own words: the ring I described wasn't there. There was a
